@@ -46,5 +46,29 @@ export const MongoService = {
             console.error('[Mongo] ❌ Fetch Error:', error);
             return [];
         }
+    },
+
+    // 3. Delete Task
+    deleteTask: async (taskId: string) => {
+        try {
+            const response = await fetch(`${API_URL}/missions/${taskId}`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) throw new Error('Delete failed');
+            console.log(`[Mongo] 🗑️ Deleted task: ${taskId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('[Mongo] ❌ Delete Error:', error);
+            return { error };
+        }
+    },
+
+    // 4. Delete multiple tasks by date (helper)
+    deleteTasksByDate: async (tasks: any[]) => {
+        // Since we don't have a bulk delete API yet, we'll delete sequentially
+        // or we could add a bulk endpoint. For now, sequential is safer for existing API.
+        for (const task of tasks) {
+            await MongoService.deleteTask(task.id);
+        }
     }
 };
