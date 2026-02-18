@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 
 interface SignInModalProps {
     isOpen: boolean;

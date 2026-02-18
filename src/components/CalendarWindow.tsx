@@ -3,7 +3,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { useTaskStore } from '../store/useTaskStore';
 import './CalendarWindow.css';
-import { isSameDay, isToday } from 'date-fns';
+import { isSameDay } from 'date-fns';
 import { useUser } from '@clerk/clerk-react';
 import { MongoService } from '../services/MongoService';
 
