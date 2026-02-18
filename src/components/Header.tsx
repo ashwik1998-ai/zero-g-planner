@@ -225,20 +225,26 @@ export function Header({
                     </span>
 
                     {/* Level badge */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{
+                        display: 'flex', flexDirection: 'column', gap: '2px',
+                        background: 'rgba(59,130,246,0.1)',
+                        border: '1px solid rgba(59,130,246,0.2)',
+                        borderRadius: '10px', padding: '4px 10px',
+                        boxShadow: '0 0 15px rgba(59,130,246,0.1)'
+                    }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '11px', fontWeight: 800, color: '#60a5fa', letterSpacing: '0.5px' }}>
                                 {level >= 4 ? 'ACE' : level === 3 ? 'COMMANDER' : level === 2 ? 'PILOT' : 'CADET'}
                             </span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(96, 165, 250, 0.6)' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.4)' }}>
                                 LVL {level}
                             </span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '60px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                                <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', transition: 'width 0.5s', borderRadius: '2px' }} />
+                            <div style={{ width: '60px', height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', transition: 'width 0.5s', borderRadius: '2px' }} />
                             </div>
-                            <span style={{ fontSize: '9px', color: '#4b5563', fontFamily: 'monospace' }}>{xp} / {(Math.floor(xp / 500) + 1) * 500} XP</span>
+                            <span style={{ fontSize: '9px', color: '#6b7280', fontFamily: 'monospace', opacity: 0.8 }}>{xp} / {(Math.floor(xp / 500) + 1) * 500}</span>
                         </div>
                     </div>
 

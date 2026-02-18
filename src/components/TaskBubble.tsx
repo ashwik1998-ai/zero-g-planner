@@ -152,7 +152,7 @@ export function TaskBubble({ task, onEdit, onFocus, activeBubbleId, setActiveBub
                 <meshStandardMaterial
                     color={color}
                     emissive={color}
-                    emissiveIntensity={hovered || isActive ? 3.5 : (isPilot ? 2.5 : 1.8)}
+                    emissiveIntensity={hovered || isActive ? 3.5 : (isPilot ? 2.5 : 2.2)}
                     roughness={isAce ? 0.05 : 0.15}
                     metalness={isAce ? 0.8 : 0.3}
                     transparent={false}

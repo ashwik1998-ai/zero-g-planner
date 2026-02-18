@@ -438,10 +438,32 @@ function MainApp() {
           display: (isMobile && activeTab !== 'orbit') ? 'none' : 'block',
           paddingBottom: isMobile ? '70px' : 0
         }}>
-          {/* Top-center title */}
-          <div style={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', color: 'white', pointerEvents: 'none', zIndex: 10, textAlign: 'center' }}>
-            <h1 style={{ margin: 0, fontSize: isMobile ? '1.5rem' : '2rem', textShadow: '0 0 10px rgba(255,255,255,0.5)', letterSpacing: '4px', fontWeight: 'bold' }}>ZERO-G</h1>
-            <p style={{ margin: 0, opacity: 0.7, letterSpacing: '1px', fontSize: isMobile ? '0.7rem' : '0.8rem' }}>DAILY MISSION CONTROL 🚀</p>
+          <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', color: 'white', pointerEvents: 'none', zIndex: 10, textAlign: 'center' }}>
+            <h1 style={{
+              margin: 0,
+              fontSize: isMobile ? '2rem' : '3.5rem',
+              fontWeight: 900,
+              letterSpacing: '8px',
+              fontFamily: 'Outfit, Inter, sans-serif',
+              background: 'linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.4) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 20px rgba(59,130,246,0.6))',
+              lineHeight: 1
+            }}>
+              ZERO-G
+            </h1>
+            <p style={{
+              margin: '8px 0 0',
+              opacity: 0.6,
+              letterSpacing: '3px',
+              fontSize: isMobile ? '0.7rem' : '0.9rem',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              color: '#60a5fa'
+            }}>
+              {level >= 4 ? 'ACE' : level === 3 ? 'COMMANDER' : level === 2 ? 'PILOT' : 'CADET'} MISSION CONTROL
+            </p>
           </div>
 
           {/* Floating Quick-Add — top right of canvas */}
@@ -627,7 +649,7 @@ function MainApp() {
             <pointLight position={[10, 10, 10]} intensity={2} />
             <pointLight position={[-10, -10, -5]} intensity={1} />
             <Suspense fallback={null}>
-              <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} speed={1} />
+              <Stars radius={150} depth={60} count={8000} factor={6} saturation={0.5} speed={1.5} />
             </Suspense>
             <OrbitControls enablePan={true} maxDistance={40} minDistance={2} maxPolarAngle={Math.PI / 1.5} />
 
@@ -644,21 +666,34 @@ function MainApp() {
 
             <TimeRing timezone={userTimezone} />
 
+            {/* Central Sun / Core Glow */}
+            <group>
+              <mesh>
+                <sphereGeometry args={[1.5, 32, 32]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+              </mesh>
+              <mesh scale={[1.1, 1.1, 1.1]}>
+                <sphereGeometry args={[1.5, 32, 32]} />
+                <meshBasicMaterial color="#3b82f6" transparent opacity={0.1} />
+              </mesh>
+              <pointLight intensity={10} distance={20} color="#60a5fa" />
+            </group>
+
             {/* Category Rings — evolve with level */}
             <CategoryRing
               radius={4}
               color={level >= 4 ? '#a855f7' : level === 3 ? '#f59e0b' : level === 2 ? '#06b6d4' : '#3b82f6'}
-              opacity={level >= 2 ? 0.15 : 0.08}
+              opacity={level >= 2 ? 0.25 : 0.2}
             /> {/* Inner */}
             <CategoryRing
               radius={6}
               color={level >= 4 ? '#a855f7' : level === 3 ? '#f59e0b' : level === 2 ? '#06b6d4' : '#10b981'}
-              opacity={level >= 2 ? 0.15 : 0.08}
+              opacity={level >= 2 ? 0.2 : 0.15}
             /> {/* Middle */}
             <CategoryRing
               radius={8}
               color={level >= 4 ? '#a855f7' : level === 3 ? '#f59e0b' : level === 2 ? '#06b6d4' : '#f59e0b'}
-              opacity={level >= 2 ? 0.15 : 0.08}
+              opacity={level >= 2 ? 0.15 : 0.1}
             /> {/* Outer */}
 
             {/* Asteroid Belt for overdue */}
