@@ -1,0 +1,61 @@
+.sci-fi-calendar {
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    font-family: 'Inter', sans-serif !important;
+    color: white !important;
+}
+
+.sci-fi-calendar.condensed .react-calendar__navigation button {
+    font-size: 0.8em;
+    /* Smaller font for 15% width */
+    min-width: 20px;
+}
+
+.sci-fi-calendar .react-calendar__navigation button {
+    color: white !important;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.sci-fi-calendar .react-calendar__navigation button:enabled:hover,
+.sci-fi-calendar .react-calendar__navigation button:enabled:focus {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 4px;
+}
+
+.sci-fi-calendar .react-calendar__month-view__weekdays {
+    text-transform: uppercase;
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #44aaff;
+    opacity: 0.8;
+}
+
+.sci-fi-calendar .react-calendar__tile {
+    color: white;
+    background: transparent !important;
+    transition: all 0.2s;
+    border-radius: 6px;
+    padding: 8px 4px;
+    font-size: 0.8rem;
+}
+
+.sci-fi-calendar .react-calendar__tile:enabled:hover,
+.sci-fi-calendar .react-calendar__tile:enabled:focus {
+    background-color: rgba(68, 170, 255, 0.2) !important;
+    color: white;
+}
+
+.sci-fi-calendar .react-calendar__tile--now {
+    background: rgba(255, 170, 0, 0.1) !important;
+    color: #ffaa00 !important;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+}
+
+.sci-fi-calendar .react-calendar__tile--active {
+    background: #44aaff !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(68, 170, 255, 0.3);
+    border: 1px solid #44aaff;
+}
