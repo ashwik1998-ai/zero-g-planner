@@ -60,3 +60,38 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.4);
 }
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile safe area & touch improvements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* prevent iOS zoom on focus */
