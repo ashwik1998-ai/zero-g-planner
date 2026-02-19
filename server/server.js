@@ -147,13 +147,33 @@ app.get('/api/leaderboard', async (req, res) => {
  * Updates a user's XP, Level, and Profile info on the leaderboard.
  */
 app.post('/api/leaderboard/sync', async (req, res) => {
-    const { userId, displayName, avatar, xp, level } = req.body;
+    const { userId, displayName, avatar, xp, level, streak, achievements, lastCompletedDate } = req.body;
     try {
         const entry = await Leaderboard.findOneAndUpdate(
             { userId },
-            { displayName, avatar, xp, level, lastSync: new Date() },
+            {
+                displayName, avatar, xp, level,
+                streak: streak || 0,
+                achievements: achievements || [],
+                lastCompletedDate: lastCompletedDate || null,
+                lastSync: new Date()
+            },
             { upsert: true, returnDocument: 'after' }
         );
+        res.json(entry);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * GET /api/user/:userId
+ * Retrieves specific user's stats for hydration.
+ */
+app.get('/api/user/:userId', async (req, res) => {
+    try {
+        const entry = await Leaderboard.findOne({ userId: req.params.userId });
+        if (!entry) return res.status(404).json({ error: 'User not found' });
         res.json(entry);
     } catch (err) {
         res.status(500).json({ error: err.message });

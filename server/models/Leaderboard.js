@@ -6,6 +6,9 @@ const LeaderboardSchema = new mongoose.Schema({
     avatar: { type: String, default: '' },
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
+    streak: { type: Number, default: 0 },
+    achievements: { type: [String], default: [] },
+    lastCompletedDate: { type: String, default: null }, // ISO date string
     lastSync: { type: Date, default: Date.now },
 }, {
     timestamps: true

@@ -64,6 +64,7 @@ interface TaskState {
     addSubtask: (taskId: string, text: string) => void;
     toggleSubtask: (taskId: string, subtaskId: string) => void;
     removeSubtask: (taskId: string, subtaskId: string) => void;
+    setUserData: (data: { xp: number; level: number; streak: number; achievements: string[]; lastCompletedDate: string | null }) => void;
 }
 
 function checkAchievements(
@@ -287,11 +288,20 @@ export const useTaskStore = create<TaskState>()(
 
             removeSubtask: (taskId, subtaskId) =>
                 set((state) => ({
-                    tasks: state.tasks.map(t =>
-                        t.id === taskId
-                            ? { ...t, subtasks: (t.subtasks ?? []).filter(s => s.id !== subtaskId) }
+                    tasks: state.tasks.map((t) =>
+                        t.id === taskId && t.subtasks
+                            ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subtaskId) }
                             : t
                     ),
+                })),
+
+            setUserData: (data) =>
+                set((state) => ({
+                    xp: data.xp,
+                    level: data.level,
+                    streak: data.streak,
+                    achievements: data.achievements,
+                    lastCompletedDate: data.lastCompletedDate,
                 })),
         }),
         {

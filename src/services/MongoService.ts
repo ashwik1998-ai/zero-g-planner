@@ -73,7 +73,16 @@ export const MongoService = {
     },
 
     // 5. Sync Leaderboard Stats
-    syncLeaderboard: async (userData: { userId: string, displayName: string, avatar: string, xp: number, level: number }) => {
+    syncLeaderboard: async (userData: {
+        userId: string,
+        displayName: string,
+        avatar: string,
+        xp: number,
+        level: number,
+        streak?: number,
+        achievements?: string[],
+        lastCompletedDate?: string | null
+    }) => {
         try {
             const response = await fetch(`${API_URL}/leaderboard/sync`, {
                 method: 'POST',
@@ -97,6 +106,24 @@ export const MongoService = {
         } catch (error) {
             console.error('[Mongo] ❌ Fetch Leaderboard Error:', error);
             return [];
+        }
+    },
+
+    // 7. Fetch User Data (Hydration)
+    fetchUserData: async (userId: string) => {
+        if (!userId) return null;
+        try {
+            const response = await fetch(`${API_URL}/user/${userId}`);
+            if (!response.ok) {
+                if (response.status === 404) return null; // User not found, new user
+                throw new Error('Fetch user data failed');
+            }
+            const data = await response.json();
+            console.log('[Mongo] 💧 Hydrated user data:', data.displayName);
+            return data;
+        } catch (error) {
+            console.error('[Mongo] ❌ Fetch User Data Error:', error);
+            return null;
         }
     }
 };

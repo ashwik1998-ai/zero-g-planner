@@ -430,21 +430,48 @@ function MainApp() {
   const [shrinkingTasks, setShrinkingTasks] = useState<string[]>([]);
 
   const { user: clerkUser } = useUser();
-  const xp = useTaskStore((state) => state.xp); // Need XP for sync
+  const xp = useTaskStore((state) => state.xp);
 
-  // Sync XP & Level to Leaderboard whenever they change
+  const streak = useTaskStore((state) => state.streak);
+  const achievements = useTaskStore((state) => state.achievements);
+  const lastCompletedDate = useTaskStore((state) => state.lastCompletedDate);
+  const setUserData = useTaskStore((state) => state.setUserData);
+
+  // 1. Hydrate user data from backend on login
+  useEffect(() => {
+    if (clerkUser) {
+      const userId = clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.id;
+      console.log('💧 Hydrating user data for:', userId);
+      MongoService.fetchUserData(userId).then(data => {
+        if (data) {
+          setUserData({
+            xp: data.xp,
+            level: data.level,
+            streak: data.streak || 0,
+            achievements: data.achievements || [],
+            lastCompletedDate: data.lastCompletedDate || null
+          });
+        }
+      });
+    }
+  }, [clerkUser, setUserData]);
+
+  // 2. Sync Stats to Leaderboard whenever they change
   useEffect(() => {
     if (clerkUser && xp >= 0) {
-      console.log('🔄 Syncing XP to backend:', xp);
+      // console.log('🔄 Syncing stats to backend:', { xp, streak, achievements: achievements.length });
       MongoService.syncLeaderboard({
         userId: clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.id,
         displayName: clerkUser.fullName || clerkUser.username || 'Unknown Commander',
         avatar: clerkUser.imageUrl,
         xp,
-        level
+        level,
+        streak,
+        achievements,
+        lastCompletedDate
       });
     }
-  }, [xp, level, clerkUser]);
+  }, [xp, level, streak, achievements, lastCompletedDate, clerkUser]);
 
   // Derive timezone from user's saved nationality
   const nationalityCode = (clerkUser?.unsafeMetadata?.nationality as string) ?? 'IN';

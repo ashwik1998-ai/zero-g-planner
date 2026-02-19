@@ -26,9 +26,12 @@ export function LeaderboardPanel({ onClose, currentXp, currentLevel }: Leaderboa
     useEffect(() => {
         // 1. Sync current user (dual-check to ensure they appear immediately)
         if (user) {
+            const myId = user.primaryEmailAddress?.emailAddress ?? user.id;
+            const myName = user.fullName || user.username || 'Commander';
+
             MongoService.syncLeaderboard({
-                userId: user.id || user.primaryEmailAddress?.emailAddress || '',
-                displayName: user.fullName || user.username || 'Commander',
+                userId: myId,
+                displayName: myName,
                 avatar: user.imageUrl || '',
                 xp: currentXp,
                 level: currentLevel,
@@ -37,10 +40,27 @@ export function LeaderboardPanel({ onClose, currentXp, currentLevel }: Leaderboa
                 return MongoService.fetchLeaderboard();
             }).then(data => {
                 // Deduplicate by userId (keep highest XP if duplicate)
-                const unique = Array.from(new Map(data.map((item: LeaderboardEntry) => [item.userId, item])).values());
+                const uniqueMap = new Map();
+                data.forEach((item: LeaderboardEntry) => {
+                    if (!uniqueMap.has(item.userId) || item.xp > uniqueMap.get(item.userId).xp) {
+                        uniqueMap.set(item.userId, item);
+                    }
+                });
+
+                let unique = Array.from(uniqueMap.values()) as LeaderboardEntry[];
+
+                // Filter out "ghosts" (entries with MY name but NOT my ID)
+                // This handles cases where I have an old ID record in the DB
+                unique = unique.filter(entry => {
+                    if (entry.displayName === myName && entry.userId !== myId) {
+                        return false; // It's a ghost of me
+                    }
+                    return true;
+                });
+
                 // Sort high to low
-                unique.sort((a: any, b: any) => b.xp - a.xp);
-                setEntries(unique as LeaderboardEntry[]);
+                unique.sort((a, b) => b.xp - a.xp);
+                setEntries(unique);
                 setLoading(false);
             });
         } else {
