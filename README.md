@@ -25,6 +25,14 @@
 - **Cross-Device Sync**: Real-time synchronization via MongoDB Atlas. Start on desktop, finish on mobile.
 - **PWA Capabilities**: Installable on mobile with touch-optimized "Quick Add" sheet and haptic feedback.
 
+### 📱 Mobile Experience
+- **Vertical Scroll Layout**: A seamless, app-like experience stacking the 3D view, calendar, and mission log.
+- **Touch Controls**:
+  - **Swipe** to rotate the celestial sphere.
+  - **Pinch** to zoom in/out of the 3D view.
+  - **floating Action Button (FAB)** for quick mission entry.
+
+
 ---
 
 ## 🛠️ Tech Stack
