@@ -7,6 +7,7 @@ import './CalendarWindow.css';
 import { isSameDay } from 'date-fns';
 import { useUser } from '@clerk/clerk-react';
 import { MongoService } from '../services/MongoService';
+import { v4 as uuidv4 } from 'uuid';
 import { WorldClock } from './WorldClock';
 
 interface CalendarWindowProps {
@@ -41,7 +42,10 @@ export function CalendarWindow({ selectedDate, onDateChange }: CalendarWindowPro
         const deadline = new Date(selectedDate);
         const [hours, minutes] = missionTime.split(':');
         deadline.setHours(parseInt(hours), parseInt(minutes));
+        // Pre-generate the ID so we can sync the EXACT same ID to MongoDB
+        const newId = uuidv4();
         const newTask = {
+            id: newId,
             title: missionTitle,
             deadline,
             urgency: newUrgency,
@@ -49,10 +53,13 @@ export function CalendarWindow({ selectedDate, onDateChange }: CalendarWindowPro
             description: missionDescription,
             category: missionCategory,
             subtasks: [],
-            recurrence: null
+            recurrence: null,
+            status: 'active' as const,
+            xpAwarded: false,
+            createdAt: new Date(),
         };
         addTask(newTask);
-        if (user) MongoService.syncTask({ ...newTask, status: 'active', id: 'pending-sync' }, user);
+        if (user) MongoService.syncTask(newTask, user);
         setMissionTitle('');
         setMissionColor('#00cc88');
         setMissionTime('12:00');

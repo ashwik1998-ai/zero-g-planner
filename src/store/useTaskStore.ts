@@ -101,28 +101,7 @@ function checkAchievements(
 export const useTaskStore = create<TaskState>()(
     persist(
         (set) => ({
-            tasks: [
-                {
-                    id: uuidv4(),
-                    title: 'Finish Project Proposal',
-                    deadline: new Date(Date.now() + 1000 * 60 * 60 * 2),
-                    urgency: 5,
-                    status: 'active',
-                    createdAt: new Date(),
-                    color: '#ff4444',
-                    category: 'work',
-                },
-                {
-                    id: uuidv4(),
-                    title: 'Buy Groceries',
-                    deadline: new Date(Date.now() + 1000 * 60 * 60 * 24),
-                    urgency: 2,
-                    status: 'active',
-                    createdAt: new Date(),
-                    color: '#00cc88',
-                    category: 'personal',
-                },
-            ],
+            tasks: [],
             xp: 0,
             level: 1,
             streak: 0,
@@ -139,21 +118,19 @@ export const useTaskStore = create<TaskState>()(
             }),
 
             addTask: (task) =>
-                set((state) => ({
-                    tasks: [
-                        ...state.tasks,
-                        {
-                            id: uuidv4(),
-                            createdAt: new Date(),
-                            status: 'active',
-                            urgency: 1,
-                            color: '#3b82f6',
-                            xpAwarded: false,
-                            subtasks: [],
-                            ...task,
-                        },
-                    ],
-                })),
+                set((state) => {
+                    const newTask = {
+                        id: task.id || uuidv4(),
+                        createdAt: new Date(),
+                        status: 'active' as const,
+                        urgency: 1,
+                        color: '#3b82f6',
+                        xpAwarded: false,
+                        subtasks: [],
+                        ...task,
+                    };
+                    return { tasks: [...state.tasks, newTask] };
+                }),
 
             updateTask: (id, updates) =>
                 set((state) => ({

@@ -57,11 +57,16 @@ function DataSync() {
             deadline: new Date(m.deadline),
             urgency: m.urgency,
             status: m.status,
-            createdAt: new Date(m.createdAt),
+            createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
             xpAwarded: m.xpAwarded,
-            color: '#3b82f6',
-            recurrence: m.recurrence || null, // Ensure recurrence is null if not set
-            subtasks: m.subtasks || [] // Ensure subtasks is an empty array if not set
+            // Restore all saved fields — do NOT override with defaults
+            color: m.color || '#3b82f6',
+            description: m.description || '',
+            category: m.category || 'work',
+            recurrence: m.recurrence || null,
+            subtasks: m.subtasks || [],
+            groupId: m.groupId,
+            completionNote: m.completionNote,
           }));
           setTasks(parsedMissions);
           console.log(`✅ Loaded ${parsedMissions.length} missions from Cloud.`);
