@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# 🪐 Zero-G Planner
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Zero-G Planner** is a sci-fi themed productivity application that gamifies task management. It visualizes your daily tasks as planets orbiting a star, where urgency determines orbit distance. Complete missions to earn XP, level up your commander rank, and unlock new cosmic themes.
 
-Currently, two official plugins are available:
+![Zero-G Screenshot](/public/screenshot.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Key Features
 
-## React Compiler
+### 🎮 Gamified Productivity
+- **Orbital Visualization**: Tasks are planets. Urgent tasks orbit closer to the sun; less urgent ones drift in the outer rim.
+- **XP & Leveling System**:
+  - **Cadet (Lvl 1)** → **Pilot (Lvl 2)** → **Commander (Lvl 3)** → **Ace (Lvl 4)**
+  - Unlocks: New planet skins, orbital rings, and sound effects at each rank.
+- **Achievements**: Earn badges for streaks (🔥), volume (💯), night owl work (🌙), and more.
+- **Leaderboard**: Compete globally with other commanders for highest XP.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🤖 ARIA AI Co-Pilot
+- **Integrated AI Chat**: Powered by **Groq (Llama 3.3 70B)**.
+- **Context-Aware**: ARIA reads your real-time MongoDB mission logs.
+- **Natural Language**: Ask "What's overdue?", "How productive was I this week?", or "Suggest a plan for today."
 
-## Expanding the ESLint configuration
+### 🛠️ Strategic Tools
+- **Mission Control Dashboard**: Analytics grid showing completion rates, category breakdown, and productivity score.
+- **Focus Mode**: Built-in Pomodoro timer with ambient space sounds (Deep Space, Space Station, Alpha Waves).
+- **Cross-Device Sync**: Real-time synchronization via MongoDB Atlas. Start on desktop, finish on mobile.
+- **PWA Capabilities**: Installable on mobile with touch-optimized "Quick Add" sheet and haptic feedback.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Frontend
+- **React 18** (Vite)
+- **Three.js / React Three Fiber** (3D rendering)
+- **Framer Motion** (UI animations)
+- **Clerk** (Authentication)
+- **Zustand** (State management)
+- **Groq SDK** (AI integration)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Backend
+- **Node.js / Express**
+- **MongoDB Atlas** (Mongoose)
+- **Render** (Hosting)
+
+---
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas Cluster
+- Clerk Account
+- Groq API Key
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/yourusername/zero-g-planner.git
+cd zero-g-planner
+
+# Install dependencies (root = frontend)
+npm install
+
+# Install backend dependencies
+cd server
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Environment Setup
+Create `.env` in the **root** directory:
+```env
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_API_URL=http://localhost:3001
+VITE_BACKEND_URL=http://localhost:3001
 ```
+
+Create `.env` in the **server** directory:
+```env
+MONGO_URI=mongodb+srv://...
+PORT=3001
+GROQ_API_KEY=gsk_...
+```
+
+### 3. Run Locally
+**Terminal 1 (Backend):**
+```bash
+cd server
+node server.js
+```
+
+**Terminal 2 (Frontend):**
+```bash
+npm run dev
+```
+Open `http://localhost:5173`.
+
+---
+
+## 🛰️ Deployment
+
+### Frontend (Vercel)
+1. Import repo to Vercel.
+2. Set Environment Variables:
+   - `VITE_CLERK_PUBLISHABLE_KEY`
+   - `VITE_API_URL` (Your Render backend URL)
+   - `VITE_BACKEND_URL` (Your Render backend URL)
+
+### Backend (Render)
+1. Create new Web Service on Render.
+2. Root Directory: `server`
+3. Build Command: `npm install`
+4. Start Command: `node server.js`
+5. Environment Variables:
+   - `MONGO_URI`
+   - `GROQ_API_KEY`

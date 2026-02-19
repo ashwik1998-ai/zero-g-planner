@@ -4,6 +4,7 @@ import { SoundService } from '../services/SoundService';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const FEATURES = [
+    { icon: '🤖', title: 'ARIA AI Co-Pilot', desc: 'Ask your personal AI mission assistant anything. "What\'s overdue?" or "How productive was I this week?" — ARIA reads your real data.' },
     { icon: '🪐', title: 'Orbital Mission View', desc: 'Visualize tasks as planets orbiting a star. Urgency = proximity. Your day, mapped to the cosmos.' },
     { icon: '🚀', title: 'Launch & Track', desc: 'Complete missions by launching them into orbit. Earn XP, level up, and watch productivity soar.' },
     { icon: '📅', title: 'Mission Calendar', desc: 'Plan missions by date. Switch days instantly — no clutter, just your daily objectives.' },
@@ -602,6 +603,79 @@ export function LandingPage() {
                     ))}
                 </div>
             </section>
+
+            {/* ── AI SHOWCASE ── */}
+            <AnimatedSection style={{ position: 'relative', zIndex: 10, padding: '0 24px 80px', maxWidth: '900px', margin: '0 auto' }}>
+                <div style={{
+                    borderRadius: '24px', overflow: 'hidden',
+                    background: 'linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08))',
+                    border: '1px solid rgba(124,58,237,0.25)',
+                    boxShadow: '0 0 60px rgba(124,58,237,0.1)',
+                    padding: '48px 40px',
+                    display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center',
+                }}>
+                    {/* Left */}
+                    <div style={{ flex: '1 1 280px' }}>
+                        <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            padding: '5px 14px', borderRadius: '20px',
+                            background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)',
+                            fontSize: '12px', color: '#a78bfa', fontWeight: 700,
+                            letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px',
+                        }}>
+                            <span>⚡</span> Powered by Groq · Llama 3.3 70B
+                        </div>
+                        <h2 style={{
+                            margin: '0 0 16px', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)',
+                            fontWeight: 900, letterSpacing: '-1px',
+                            background: 'linear-gradient(135deg, #fff 0%, #a78bfa 60%, #06b6d4 100%)',
+                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                        }}>
+                            Meet ARIA, Your AI Mission Co-Pilot
+                        </h2>
+                        <p style={{ margin: '0 0 24px', color: '#9ca3af', fontSize: '15px', lineHeight: 1.7 }}>
+                            ARIA reads your real mission data from the database and answers natural language questions about your productivity, deadlines, and patterns — instantly.
+                        </p>
+                        <SignInButton mode="modal">
+                            <button style={{
+                                background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                                border: 'none', cursor: 'pointer', color: 'white',
+                                padding: '12px 28px', borderRadius: '24px',
+                                fontWeight: 700, fontSize: '14px',
+                                boxShadow: '0 0 24px rgba(124,58,237,0.4)',
+                                transition: 'all 0.2s',
+                            }}>
+                                🤖 Try ARIA Free →
+                            </button>
+                        </SignInButton>
+                    </div>
+
+                    {/* Right: chat preview */}
+                    <div style={{ flex: '1 1 260px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {[
+                            { from: 'user', text: 'What are my most urgent missions?' },
+                            { from: 'ai', text: 'You have 3 high-urgency missions due today — "Submit Report" (work), "Doctor Appointment" (health), and "Project Proposal" (work). I recommend tackling the report first.' },
+                            { from: 'user', text: 'How productive was I this week?' },
+                            { from: 'ai', text: 'You completed 7 of 10 missions this week — a 70% completion rate. Strong performance, Commander! 🚀' },
+                        ].map((msg, i) => (
+                            <div key={i} style={{
+                                display: 'flex',
+                                justifyContent: msg.from === 'user' ? 'flex-end' : 'flex-start',
+                            }}>
+                                <div style={{
+                                    maxWidth: '85%', padding: '10px 14px', fontSize: '13px', lineHeight: 1.6,
+                                    borderRadius: msg.from === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                                    background: msg.from === 'user' ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(255,255,255,0.06)',
+                                    border: msg.from === 'ai' ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                                    color: 'white',
+                                }}>
+                                    {msg.text}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </AnimatedSection>
 
             {/* ── FEATURES ── */}
             <section id="features" style={{ position: 'relative', zIndex: 10, padding: '40px 24px 80px', maxWidth: '1100px', margin: '0 auto' }}>

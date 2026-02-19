@@ -26,6 +26,8 @@ import { ConstellationLines } from './components/ConstellationLines';
 import { BlackHole } from './components/BlackHole';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { NotificationService } from './services/NotificationService';
+import { SoundService } from './services/SoundService';
+import { AIChat } from './components/AIChat';
 import { v4 as uuidv4 } from 'uuid';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "";
@@ -491,6 +493,7 @@ function MainApp() {
 
   const isMobile = useMobile();
   const [activeTab, setActiveTab] = useState<'orbit' | 'schedule' | 'logs'>('orbit');
+  const [showAIChat, setShowAIChat] = useState(false);
 
   const [leftWidth, setLeftWidth] = useState(280);
   const [rightWidth, setRightWidth] = useState(320);
@@ -838,6 +841,35 @@ function MainApp() {
           }}
         />
       )}
+
+      {/* AI Chat floating button — bottom-right, above nav bar on mobile */}
+      <button
+        onClick={() => { SoundService.playClick(); setShowAIChat(v => !v); }}
+        onMouseEnter={() => SoundService.playHover()}
+        style={{
+          position: 'fixed',
+          bottom: isMobile ? '90px' : '24px',
+          right: '20px',
+          zIndex: 250,
+          width: '52px', height: '52px',
+          borderRadius: '50%',
+          background: showAIChat
+            ? 'rgba(124,58,237,0.2)'
+            : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          border: showAIChat ? '1px solid rgba(124,58,237,0.5)' : 'none',
+          color: 'white', fontSize: '22px',
+          cursor: 'pointer',
+          boxShadow: showAIChat ? 'none' : '0 0 24px rgba(124,58,237,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+        }}
+        title="ARIA — AI Mission Co-Pilot"
+      >
+        {showAIChat ? '✕' : '🤖'}
+      </button>
+
+      {/* AI Chat panel */}
+      {showAIChat && <AIChat onClose={() => setShowAIChat(false)} />}
     </div>
   );
 }
