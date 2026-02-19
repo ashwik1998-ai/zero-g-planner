@@ -258,18 +258,30 @@ function AppContent() {
   const DEV_BYPASS = false;
   const { isSignedIn, isLoaded, user } = useUser();
   const [nationalitySet, setNationalitySet] = useState(false);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+
+  // If Clerk takes > 5s to load (e.g. during an outage), fall back to landing page
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadTimedOut(true), 5000);
+    if (isLoaded) clearTimeout(timer);
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
 
   // Once user loads, check if nationality is already set
   useEffect(() => {
     if (user?.unsafeMetadata?.nationality) setNationalitySet(true);
   }, [user]);
 
-  if (!isLoaded) {
+  if (!isLoaded && !loadTimedOut) {
     return (
-      <div style={{ width: '100vw', height: '100vh', background: '#050510', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100vw', height: '100vh', background: '#050510', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
         <div style={{ color: '#60a5fa', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.7 }}>
           Initializing...
         </div>
+        <div style={{ width: '120px', height: '2px', background: 'rgba(96,165,250,0.15)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', background: 'linear-gradient(90deg, #3b82f6, #06b6d4)', borderRadius: '2px', animation: 'loading-bar 1.5s ease-in-out infinite' }} />
+        </div>
+        <style>{`@keyframes loading-bar { 0% { width: 0%; margin-left: 0; } 50% { width: 80%; margin-left: 10%; } 100% { width: 0%; margin-left: 100%; } }`}</style>
       </div>
     );
   }
