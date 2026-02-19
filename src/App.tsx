@@ -261,6 +261,7 @@ function AppContent() {
   const { isSignedIn, isLoaded, user } = useUser();
   const [nationalitySet, setNationalitySet] = useState(false);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [isSyncingAuth, setIsSyncingAuth] = useState(true);
 
   // If Clerk takes > 5s to load (e.g. during an outage), fall back to landing page
   useEffect(() => {
@@ -271,10 +272,17 @@ function AppContent() {
 
   // Once user loads, check if nationality is already set
   useEffect(() => {
-    if (user?.unsafeMetadata?.nationality) setNationalitySet(true);
-  }, [user]);
+    if (isLoaded) {
+      if (user?.unsafeMetadata?.nationality) {
+        setNationalitySet(true);
+      }
+      // Add a small delay/microtask to ensure state updates before clearing loading screen
+      // or just set it to false.
+      setIsSyncingAuth(false);
+    }
+  }, [isLoaded, user]);
 
-  if (!isLoaded && !loadTimedOut) {
+  if ((!isLoaded || isSyncingAuth) && !loadTimedOut) {
     return (
       <div style={{ width: '100vw', height: '100vh', background: '#050510', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
         <div style={{ color: '#60a5fa', fontSize: '14px', letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.7 }}>
