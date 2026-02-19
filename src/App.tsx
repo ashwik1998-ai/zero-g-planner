@@ -12,7 +12,6 @@ import { LandingPage } from './components/LandingPage';
 import { isSameDay } from 'date-fns';
 import { ClerkProvider, useUser } from '@clerk/clerk-react';
 import { useMobile } from './hooks/useMobile';
-import { MobileNavBar } from './components/MobileNavBar';
 import { MongoService } from './services/MongoService';
 import { COUNTRIES, getCountryByCode, flagUrl } from './data/countries';
 import { AchievementToast } from './components/AchievementToast';
@@ -514,8 +513,6 @@ function MainApp() {
     setQaTitle(''); setQaDate(new Date().toISOString().split('T')[0]);
     setQaTime('12:00'); setQaColor('#00cc88'); setQaDesc('');
     setShowQuickAdd(false);
-    // On mobile, switch to orbit tab to see newly added mission
-    if (isMobile) setActiveTab('orbit');
   };
 
   // Keyboard Shortcuts
@@ -542,7 +539,6 @@ function MainApp() {
 
 
   const isMobile = useMobile();
-  const [activeTab, setActiveTab] = useState<'orbit' | 'schedule' | 'logs'>('orbit');
   const [showAIChat, setShowAIChat] = useState(false);
 
   const [leftWidth, setLeftWidth] = useState(280);
@@ -589,9 +585,19 @@ function MainApp() {
       />
       <DataSync />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', position: 'relative', height: 'calc(100vh - 60px)', minHeight: '600px', overflow: 'hidden' }}>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        position: 'relative',
+        // Desktop: Fixed height, no scroll (internal scroll areas)
+        // Mobile: Auto height, let body scroll
+        height: isMobile ? 'auto' : 'calc(100vh - 60px)',
+        minHeight: isMobile ? 'auto' : '600px',
+        overflow: isMobile ? 'visible' : 'hidden'
+      }}>
 
-        {/* LEFT: Calendar (desktop) */}
+        {/* LEFT: Calendar (desktop only - on mobile it goes below) */}
         {!isMobile && (
           <div style={{ width: leftWidth, position: 'relative', flexShrink: 0, zIndex: 20 }}>
             <CalendarWindow selectedDate={selectedDate} onDateChange={setSelectedDate} />
@@ -603,20 +609,26 @@ function MainApp() {
           </div>
         )}
 
-        {/* MOBILE: Calendar tab */}
-        {isMobile && activeTab === 'schedule' && (
-          <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }} className="custom-scrollbar">
-            <CalendarWindow selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          </div>
-        )}
-
         {/* CENTER: 3D Canvas */}
         <div style={{
-          flex: 1, position: 'relative', minWidth: 0, zIndex: 10,
+          flex: isMobile ? 'none' : 1, // On mobile, fixed height, don't grow
+          height: isMobile ? '45vh' : 'auto', // Mobile: takes top 45% of screen
+          position: 'relative',
+          minWidth: 0,
+          zIndex: 10,
           background: bg.color,
-          display: (isMobile && activeTab !== 'orbit') ? 'none' : 'block',
-          paddingBottom: isMobile ? '70px' : 0
+          borderBottom: isMobile ? '1px solid rgba(255,255,255,0.1)' : 'none',
         }}>
+          {isMobile && (
+            <div style={{
+              position: 'absolute', bottom: '10px', left: 0, right: 0,
+              textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.4)',
+              pointerEvents: 'none', zIndex: 20
+            }}>
+              Scroll down for Missions ↓
+            </div>
+          )}
+
           <div style={{ position: 'absolute', top: 30, left: '50%', transform: 'translateX(-50%)', color: 'white', pointerEvents: 'none', zIndex: 10, textAlign: 'center' }}>
             <h1 style={{
               margin: 0,
@@ -645,8 +657,7 @@ function MainApp() {
             </p>
           </div>
 
-          {/* Floating Quick-Add — desktop top-right dropdown / mobile bottom sheet */}
-          {/* Desktop toggle button — hidden on mobile (FAB in nav bar handles it) */}
+          {/* Floating Quick-Add — desktop top-right / mobile FAB is below */}
           {!isMobile && (
             <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50, fontFamily: 'Inter, system-ui, sans-serif' }}>
               <button
@@ -741,7 +752,14 @@ function MainApp() {
             <Suspense fallback={null}>
               <Stars radius={150} depth={60} count={8000} factor={6} saturation={0.5} speed={1.5} />
             </Suspense>
-            <OrbitControls enablePan={true} maxDistance={40} minDistance={2} maxPolarAngle={Math.PI / 1.5} />
+            {/* Disable OrbitControls on mobile to allow page scrolling, or use two-finger? 
+                Better to disable zoom/pan on mobile so touch scrolls the page. */}
+            <OrbitControls
+              enableZoom={!isMobile}
+              enablePan={!isMobile}
+              enableRotate={true} // Allow rotation
+              maxDistance={40} minDistance={2} maxPolarAngle={Math.PI / 1.5}
+            />
 
             {/* Background Click to dismiss bubble info */}
             <mesh
@@ -835,7 +853,7 @@ function MainApp() {
           </Canvas>
         </div>
 
-        {/* RIGHT: Mission Log (desktop) */}
+        {/* RIGHT: Mission Log (Desktop) */}
         {!isMobile && (
           <div style={{ width: rightWidth, position: 'relative', flexShrink: 0, zIndex: 20, overflowY: 'auto' }} className="custom-scrollbar">
             <div
@@ -847,21 +865,84 @@ function MainApp() {
           </div>
         )}
 
-        {/* MOBILE: Logs tab */}
-        {isMobile && activeTab === 'logs' && (
-          <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }} className="custom-scrollbar">
-            <MissionLog selectedDate={selectedDate} onEditTask={handleEditTask} editingTaskId={editingTaskId} />
+        {/* MOBILE: Section Stack (Calendar + Missions) */}
+        {isMobile && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {/* Calendar Section */}
+            <div style={{ padding: '20px 16px', background: 'rgba(5,5,16,0.8)' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#60a5fa', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                📅 Mission Schedule
+              </div>
+              <CalendarWindow selectedDate={selectedDate} onDateChange={(d) => { setSelectedDate(d); /* Auto scroll to missions? */ }} />
+            </div>
+
+            {/* Missions Section */}
+            <div style={{ padding: '0 16px 120px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#a855f7', marginBottom: '10px', marginTop: '20px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                📋 Mission Log
+              </div>
+              <MissionLog selectedDate={selectedDate} onEditTask={handleEditTask} editingTaskId={editingTaskId} />
+            </div>
           </div>
         )}
 
-        {/* MOBILE: Nav bar */}
+        {/* MOBILE: Floating Action Button (replaces MobileNavBar) */}
         {isMobile && (
-          <div style={{ position: 'absolute', bottom: 0, width: '100%', zIndex: 1000, background: 'linear-gradient(to top, rgba(5,5,16,0.98) 60%, transparent)' }}>
-            <MobileNavBar
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onAddMission={() => { setShowQuickAdd(v => !v); }}
-            />
+          <button
+            onClick={() => setShowQuickAdd(true)}
+            style={{
+              position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+              zIndex: 1000,
+              background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
+              border: 'none', borderRadius: '30px',
+              padding: '12px 24px', color: 'white',
+              fontSize: '15px', fontWeight: 700,
+              boxShadow: '0 4px 20px rgba(59,130,246,0.5)',
+              display: 'flex', alignItems: 'center', gap: '8px'
+            }}
+          >
+            + New Mission
+          </button>
+        )}
+
+        {/* Mobile quick-add bottom sheet - Keep existing */}
+        {isMobile && showQuickAdd && (
+          <div
+            onClick={() => setShowQuickAdd(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 2000,
+              background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)',
+              display: 'flex', alignItems: 'flex-end',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%',
+                background: 'rgba(8,8,24,0.98)',
+                border: '1px solid rgba(59,130,246,0.2)',
+                borderRadius: '24px 24px 0 0',
+                padding: '20px 20px 32px',
+                boxShadow: '0 -20px 60px rgba(0,0,0,0.8)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                animation: 'slideUp 0.3s ease',
+              }}
+            >
+              <div style={{ width: '40px', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', margin: '0 auto 16px' }} />
+              <div style={{ fontSize: '11px', color: '#60a5fa', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>
+                New Mission Protocol
+              </div>
+              <MissionForm
+                qaTitle={qaTitle} setQaTitle={setQaTitle}
+                qaDate={qaDate} setQaDate={setQaDate}
+                qaTime={qaTime} setQaTime={setQaTime}
+                qaDesc={qaDesc} setQaDesc={setQaDesc}
+                qaCategory={qaCategory} setQaCategory={setQaCategory}
+                qaColor={qaColor} setQaColor={setQaColor}
+                showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
+                onSubmit={handleQuickAdd}
+              />
+            </div>
           </div>
         )}
       </div>
