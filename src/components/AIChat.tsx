@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 
@@ -46,7 +46,7 @@ export function AIChat({ onClose }: { onClose: () => void }) {
                 .slice(-8)
                 .map(m => ({ role: m.role, content: m.content }));
 
-            const res = await fetch(`${BACKEND_URL}/api/ai/chat`, {
+            const res = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
