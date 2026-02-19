@@ -296,7 +296,7 @@ export const useTaskStore = create<TaskState>()(
                 })),
 
             setUserData: (data) =>
-                set((state) => ({
+                set(() => ({
                     xp: data.xp,
                     level: data.level,
                     streak: data.streak,
