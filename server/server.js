@@ -76,7 +76,7 @@ app.post('/api/sync', async (req, res) => {
         const result = await Mission.findOneAndUpdate(
             { taskId: task.id },
             missionData,
-            { upsert: true, new: true, setDefaultsOnInsert: true }
+            { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
         );
 
         console.log(`✅ Synced task "${task.title}" for ${user.email}`);
@@ -121,7 +121,7 @@ app.post('/api/leaderboard/sync', async (req, res) => {
         const entry = await Leaderboard.findOneAndUpdate(
             { userId },
             { displayName, avatar, xp, level, lastSync: new Date() },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
         res.json(entry);
     } catch (err) {
