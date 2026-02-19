@@ -752,12 +752,11 @@ function MainApp() {
             <Suspense fallback={null}>
               <Stars radius={150} depth={60} count={8000} factor={6} saturation={0.5} speed={1.5} />
             </Suspense>
-            {/* Disable OrbitControls on mobile to allow page scrolling, or use two-finger? 
-                Better to disable zoom/pan on mobile so touch scrolls the page. */}
+            {/* Allow zoom on mobile as requested, but keep pan disabled to prevent getting lost */}
             <OrbitControls
-              enableZoom={!isMobile}
+              enableZoom={true}
               enablePan={!isMobile}
-              enableRotate={true} // Allow rotation
+              enableRotate={true}
               maxDistance={40} minDistance={2} maxPolarAngle={Math.PI / 1.5}
             />
 
