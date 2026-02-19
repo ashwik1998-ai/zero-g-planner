@@ -70,5 +70,33 @@ export const MongoService = {
         for (const task of tasks) {
             await MongoService.deleteTask(task.id);
         }
+    },
+
+    // 5. Sync Leaderboard Stats
+    syncLeaderboard: async (userData: { userId: string, displayName: string, avatar: string, xp: number, level: number }) => {
+        try {
+            const response = await fetch(`${API_URL}/leaderboard/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+            if (!response.ok) throw new Error('Leaderboard sync failed');
+            return await response.json();
+        } catch (error) {
+            console.error('[Mongo] ❌ Leaderboard Sync Error:', error);
+            return null;
+        }
+    },
+
+    // 6. Fetch Leaderboard
+    fetchLeaderboard: async () => {
+        try {
+            const response = await fetch(`${API_URL}/leaderboard`);
+            if (!response.ok) throw new Error('Fetch leaderboard failed');
+            return await response.json();
+        } catch (error) {
+            console.error('[Mongo] ❌ Fetch Leaderboard Error:', error);
+            return [];
+        }
     }
 };

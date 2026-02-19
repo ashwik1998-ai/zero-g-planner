@@ -430,6 +430,21 @@ function MainApp() {
   const [shrinkingTasks, setShrinkingTasks] = useState<string[]>([]);
 
   const { user: clerkUser } = useUser();
+  const xp = useTaskStore((state) => state.xp); // Need XP for sync
+
+  // Sync XP & Level to Leaderboard whenever they change
+  useEffect(() => {
+    if (clerkUser && xp >= 0) {
+      console.log('🔄 Syncing XP to backend:', xp);
+      MongoService.syncLeaderboard({
+        userId: clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.id,
+        displayName: clerkUser.fullName || clerkUser.username || 'Unknown Commander',
+        avatar: clerkUser.imageUrl,
+        xp,
+        level
+      });
+    }
+  }, [xp, level, clerkUser]);
 
   // Derive timezone from user's saved nationality
   const nationalityCode = (clerkUser?.unsafeMetadata?.nationality as string) ?? 'IN';

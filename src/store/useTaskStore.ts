@@ -140,13 +140,34 @@ export const useTaskStore = create<TaskState>()(
                 })),
 
             completeTask: (id) =>
-                set((state) => {
-                    const task = state.tasks.find(t => t.id === id);
-                    if (!task || task.status === 'completed') return {};
+                set((state: TaskState) => {
+                    const task = state.tasks.find((t) => t.id === id);
+                    if (!task) return {};
 
-                    // XP
+                    // If already completed, toggle back to active (Recall) and DEDUCT XP
+                    if (task.status === 'completed') {
+                        let deductedXp = 0;
+                        if (task.xpAwarded) {
+                            deductedXp = (task.urgency || 1) * 20;
+                        }
+                        const newXp = Math.max(0, state.xp - deductedXp);
+                        const newLevel = Math.floor(newXp / 500) + 1;
+
+                        const updatedTasks = state.tasks.map(t =>
+                            t.id === id ? { ...t, status: 'active' as const, xpAwarded: false } : t
+                        );
+
+                        return {
+                            tasks: updatedTasks,
+                            xp: newXp,
+                            level: newLevel,
+                        };
+                    }
+
+                    // If active, mark as completed and ADD XP (if not already awarded)
                     let earnedXp = 0;
-                    let xpAwarded = task.xpAwarded;
+                    let xpAwarded = task.xpAwarded || false;
+
                     if (!xpAwarded) {
                         earnedXp = (task.urgency || 1) * 20;
                         xpAwarded = true;
@@ -154,24 +175,24 @@ export const useTaskStore = create<TaskState>()(
                     const newXp = state.xp + earnedXp;
                     const newLevel = Math.floor(newXp / 500) + 1;
 
-                    // Streak
+                    // Streak Logic
                     const today = new Date().toDateString();
                     const last = state.lastCompletedDate;
                     let newStreak = state.streak;
-                    if (last === today) {
-                        // already completed one today, streak unchanged
-                    } else if (last && isYesterday(new Date(last))) {
-                        newStreak = state.streak + 1;
-                    } else {
-                        newStreak = 1;
+                    if (last !== today) {
+                        if (last && isYesterday(new Date(last))) {
+                            newStreak = state.streak + 1;
+                        } else {
+                            newStreak = 1;
+                        }
                     }
 
-                    // Updated tasks list (mark completed)
+                    // Update Task
                     const updatedTasks = state.tasks.map((t) =>
                         t.id === id ? { ...t, status: 'completed' as const, xpAwarded } : t
                     );
 
-                    // Recurring: auto-add next occurrence
+                    // Recurring Logic
                     const recurringAdditions: Task[] = [];
                     if (task.recurrence) {
                         const next = new Date(task.deadline);
@@ -180,15 +201,15 @@ export const useTaskStore = create<TaskState>()(
                         if (task.recurrence === 'monthly') next.setMonth(next.getMonth() + 1);
                         recurringAdditions.push({
                             ...task,
-                            id: uuidv4(),
+                            id: uuidv4(), // New ID for next instance
                             deadline: next,
                             createdAt: new Date(),
-                            status: 'active',
+                            status: 'active' as const,
                             xpAwarded: false,
                         });
                     }
 
-                    // Achievement check
+                    // Achievement Check
                     const allTasks = [...updatedTasks, ...recurringAdditions];
                     const newAch = checkAchievements(allTasks, newXp, newLevel, newStreak, state.achievements, task);
                     const achievements = newAch ? [...state.achievements, newAch] : state.achievements;

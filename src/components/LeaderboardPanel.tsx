@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { MongoService } from '../services/MongoService';
 
 interface LeaderboardEntry {
     userId: string;
@@ -15,7 +16,7 @@ interface LeaderboardPanelProps {
     currentLevel: number;
 }
 
-const API_BASE = 'http://localhost:5000/api';
+
 
 export function LeaderboardPanel({ onClose, currentXp, currentLevel }: LeaderboardPanelProps) {
     const { user } = useUser();
@@ -23,25 +24,34 @@ export function LeaderboardPanel({ onClose, currentXp, currentLevel }: Leaderboa
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) return;
-        // Sync current user's score
-        fetch(`${API_BASE}/leaderboard/sync`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: user.id,
+        // 1. Sync current user (dual-check to ensure they appear immediately)
+        if (user) {
+            MongoService.syncLeaderboard({
+                userId: user.id || user.primaryEmailAddress?.emailAddress || '',
                 displayName: user.fullName || user.username || 'Commander',
                 avatar: user.imageUrl || '',
                 xp: currentXp,
                 level: currentLevel,
-            }),
-        }).catch(() => { });
-
-        // Fetch leaderboard
-        fetch(`${API_BASE}/leaderboard`)
-            .then(r => r.json())
-            .then(data => { setEntries(data); setLoading(false); })
-            .catch(() => setLoading(false));
+            }).then(() => {
+                // 2. Fetch leaderboard AFTER sync
+                return MongoService.fetchLeaderboard();
+            }).then(data => {
+                // Deduplicate by userId (keep highest XP if duplicate)
+                const unique = Array.from(new Map(data.map((item: LeaderboardEntry) => [item.userId, item])).values());
+                // Sort high to low
+                unique.sort((a: any, b: any) => b.xp - a.xp);
+                setEntries(unique as LeaderboardEntry[]);
+                setLoading(false);
+            });
+        } else {
+            // Just fetch if not logged in (though panel is usually protected)
+            MongoService.fetchLeaderboard().then(data => {
+                const unique = Array.from(new Map(data.map((item: LeaderboardEntry) => [item.userId, item])).values());
+                unique.sort((a: any, b: any) => b.xp - a.xp);
+                setEntries(unique as LeaderboardEntry[]);
+                setLoading(false);
+            });
+        }
     }, [user, currentXp, currentLevel]);
 
     const myRank = entries.findIndex(e => e.userId === user?.id) + 1;
