@@ -540,7 +540,7 @@ function MainApp() {
 
         {/* MOBILE: Calendar tab */}
         {isMobile && activeTab === 'schedule' && (
-          <div style={{ flex: 1, overflow: 'hidden', paddingBottom: '70px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }} className="custom-scrollbar">
             <CalendarWindow selectedDate={selectedDate} onDateChange={setSelectedDate} />
           </div>
         )}
@@ -772,7 +772,7 @@ function MainApp() {
 
         {/* RIGHT: Mission Log (desktop) */}
         {!isMobile && (
-          <div style={{ width: rightWidth, position: 'relative', flexShrink: 0, zIndex: 20 }}>
+          <div style={{ width: rightWidth, position: 'relative', flexShrink: 0, zIndex: 20, overflowY: 'auto' }} className="custom-scrollbar">
             <div
               onMouseDown={() => setIsResizingRight(true)}
               style={{ position: 'absolute', left: 0, top: 0, width: '6px', height: '100%', cursor: 'col-resize', zIndex: 100, borderLeft: '1px solid rgba(255,255,255,0.1)' }}
@@ -784,7 +784,7 @@ function MainApp() {
 
         {/* MOBILE: Logs tab */}
         {isMobile && activeTab === 'logs' && (
-          <div style={{ flex: 1, overflow: 'hidden', paddingBottom: '70px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', paddingBottom: '80px' }} className="custom-scrollbar">
             <MissionLog selectedDate={selectedDate} onEditTask={handleEditTask} editingTaskId={editingTaskId} />
           </div>
         )}
