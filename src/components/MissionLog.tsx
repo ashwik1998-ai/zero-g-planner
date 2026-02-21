@@ -536,7 +536,7 @@ export function MissionLog({ selectedDate, onEditTask, editingTaskId }: MissionL
                                         )}
 
                                         {/* Action buttons */}
-                                        <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 10 }}>
+                                        <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 100 }}>
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
@@ -550,13 +550,15 @@ export function MissionLog({ selectedDate, onEditTask, editingTaskId }: MissionL
                                                 }}
                                                 style={{
                                                     padding: '6px 12px',
-                                                    background: 'rgba(239,68,68,0.12)',
-                                                    border: '1px solid rgba(239,68,68,0.25)',
+                                                    background: 'rgba(239,68,68,0.15)',
+                                                    border: '1px solid rgba(239,68,68,0.4)',
                                                     borderRadius: '10px', color: '#ff4444',
                                                     fontSize: '11px', fontWeight: 600,
                                                     cursor: 'pointer', transition: 'all 0.2s',
                                                     fontFamily: 'Inter, system-ui, sans-serif',
                                                 }}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.25)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
                                                 title="Abort Mission"
                                             >
                                                 🗑️

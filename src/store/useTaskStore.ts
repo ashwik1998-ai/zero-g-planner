@@ -271,14 +271,40 @@ export const useTaskStore = create<TaskState>()(
                 }),
 
             removeTask: (id) =>
-                set((state) => ({
-                    tasks: state.tasks.filter((t) => t.id !== id),
-                })),
+                set((state: TaskState) => {
+                    const task = state.tasks.find((t) => t.id === id);
+                    if (!task) return {};
+
+                    let xpChange = 0;
+                    if (task.status === 'completed' && task.xpAwarded) {
+                        xpChange = -((task.urgency || 1) * 20);
+                    }
+
+                    const newXp = Math.max(0, state.xp + xpChange);
+                    const newLevel = Math.floor(newXp / 500) + 1;
+
+                    return {
+                        tasks: state.tasks.filter((t) => t.id !== id),
+                        xp: newXp,
+                        level: newLevel,
+                    };
+                }),
 
             deleteTasksByDate: (date: Date) =>
-                set((state) => ({
-                    tasks: state.tasks.filter((t) => !isSameDay(new Date(t.deadline), date)),
-                })),
+                set((state: TaskState) => {
+                    const tasksToDelete = state.tasks.filter((t) => isSameDay(new Date(t.deadline), date));
+                    const completedTasks = tasksToDelete.filter(t => t.status === 'completed' && t.xpAwarded);
+                    const xpChange = -completedTasks.reduce((acc, t) => acc + ((t.urgency || 1) * 20), 0);
+
+                    const newXp = Math.max(0, state.xp + xpChange);
+                    const newLevel = Math.floor(newXp / 500) + 1;
+
+                    return {
+                        tasks: state.tasks.filter((t) => !isSameDay(new Date(t.deadline), date)),
+                        xp: newXp,
+                        level: newLevel,
+                    };
+                }),
 
             setAllStatus: (date: Date, status: 'active' | 'completed') =>
                 set((state) => {

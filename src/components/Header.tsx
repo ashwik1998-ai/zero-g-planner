@@ -317,18 +317,26 @@ export function Header({
                     </button>
 
                     <button
-                        onClick={() => { onAbortAll?.(); SoundService.playClick(); }}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onAbortAll?.();
+                            SoundService.playClick();
+                        }}
                         title="Abort All Missions for Selected Date"
                         style={{
-                            background: 'rgba(239,68,68,0.1)',
-                            border: '1px solid rgba(239,68,68,0.2)',
+                            background: 'rgba(239,68,68,0.15)',
+                            border: '1px solid rgba(239,68,68,0.4)',
                             cursor: 'pointer', color: '#ef4444',
-                            padding: '6px 12px', borderRadius: '12px',
-                            fontSize: '12px', fontWeight: 600,
+                            padding: '6px 14px', borderRadius: '12px',
+                            fontSize: '11px', fontWeight: 700,
                             transition: 'all 0.2s',
+                            display: 'flex', alignItems: 'center', gap: '4px'
                         }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.25)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
                     >
-                        ⚠️ Abort All
+                        <span>⚠️ Abort All</span>
                     </button>
 
                     <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
