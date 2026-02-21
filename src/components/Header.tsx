@@ -14,6 +14,8 @@ interface HeaderProps {
     onToggleAchievements?: () => void;
     onToggleLeaderboard?: () => void;
     onToggleEvents?: () => void;
+    onAbortAll?: () => void;
+    selectedDate?: Date;
 }
 
 const HOW_TO_USE_CONTENT = [
@@ -129,18 +131,12 @@ function NotificationsPageContent() {
     const [subscribed, setSubscribed] = useState(false);
 
     const handleSubscribe = async () => {
-        alert("🖱️ Button Clicked! Starting OneSignal subscription process...");
         setSubscribing(true);
         try {
-            console.log("Starting NotificationService.requestPermission()...");
             const hasPermission = await NotificationService.requestPermission();
-            console.log("Permission result:", hasPermission);
             setSubscribed(hasPermission);
-            if (hasPermission) alert("✅ Success! You are now subscribed.");
-            else alert("❌ Failed: Permission was denied or timed out.");
         } catch (e: any) {
             console.error("handleSubscribe error:", e);
-            alert("🚨 UI Error: " + (e.message || "Unknown error"));
         }
         setSubscribing(false);
     };
@@ -175,7 +171,9 @@ export function Header({
     onToggleDashboard,
     onToggleAchievements,
     onToggleLeaderboard,
-    onToggleEvents
+    onToggleEvents,
+    onAbortAll,
+    selectedDate
 }: HeaderProps) {
     const { isSignedIn, user } = useUser();
     const xp = useTaskStore(state => state.xp);
@@ -318,6 +316,21 @@ export function Header({
                         }}
                     >
                         🏆
+                    </button>
+
+                    <button
+                        onClick={() => { onAbortAll?.(); SoundService.playClick(); }}
+                        title="Abort All Missions for Selected Date"
+                        style={{
+                            background: 'rgba(239,68,68,0.1)',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                            cursor: 'pointer', color: '#ef4444',
+                            padding: '6px 12px', borderRadius: '12px',
+                            fontSize: '12px', fontWeight: 600,
+                            transition: 'all 0.2s',
+                        }}
+                    >
+                        ⚠️ Abort All
                     </button>
 
                     <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />

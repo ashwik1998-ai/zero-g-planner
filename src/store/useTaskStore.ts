@@ -40,10 +40,21 @@ export const ACHIEVEMENT_DEFS: Record<string, { label: string; desc: string; ico
     streak_7: { label: 'Week Warrior', desc: '7-day mission streak', icon: '💫' },
     streak_30: { label: 'Iron Commander', desc: '30-day mission streak', icon: '🛡️' },
     night_owl: { label: 'Night Owl', desc: 'Complete a mission after 10 PM', icon: '🦉' },
+    early_bird: { label: 'Early Bird', desc: 'Complete a mission before 8 AM', icon: '🌅' },
     speed_demon: { label: 'Speed Demon', desc: 'Complete a mission in under 1 minute', icon: '⚡' },
     level_5: { label: 'Rising Star', desc: 'Reach Level 5', icon: '🌟' },
     level_10: { label: 'Commander', desc: 'Reach Level 10', icon: '👨‍🚀' },
+    level_25: { label: 'Space Voyager', desc: 'Reach Level 25', icon: '🛸' },
     all_categories: { label: 'Renaissance', desc: 'Complete tasks in all 5 categories', icon: '🎨' },
+    work_master: { label: 'Workaholic', desc: 'Complete 25 Work missions', icon: '💼' },
+    personal_master: { label: 'Life Balanced', desc: 'Complete 25 Personal missions', icon: '🏠' },
+    health_master: { label: 'Apex Human', desc: 'Complete 25 Health missions', icon: '🏥' },
+    learning_master: { label: 'Sage', desc: 'Complete 25 Learning missions', icon: '📚' },
+    xp_1000: { label: 'XP Hunter', desc: 'Earn 1,000 Total XP', icon: '💎' },
+    xp_5000: { label: 'XP Titan', desc: 'Earn 5,000 Total XP', icon: '👑' },
+    weekend_warrior: { label: 'Weekend Warrior', desc: 'Complete 10 missions on weekends', icon: '🎡' },
+    marathon: { label: 'Marathon', desc: 'Complete 5 missions in a single day', icon: '🏃' },
+    pioneer: { label: 'Pioneer', desc: 'Add 10 missions to your schedule', icon: '🛰️' },
 };
 
 interface TaskState {
@@ -73,7 +84,7 @@ interface TaskState {
 
 function checkAchievements(
     tasks: Task[],
-    _xp: number,
+    xp: number,
     level: number,
     streak: number,
     existing: string[],
@@ -83,21 +94,46 @@ function checkAchievements(
     const count = completed.length;
     const hour = new Date(justCompleted.deadline).getHours();
     const timeSinceCreated = Date.now() - new Date(justCompleted.createdAt).getTime();
+
     const categoriesUsed = new Set(completed.map(t => t.category).filter(Boolean));
+    const workCount = completed.filter(t => t.category === 'work').length;
+    const personalCount = completed.filter(t => t.category === 'personal').length;
+    const healthCount = completed.filter(t => t.category === 'health').length;
+    const learningCount = completed.filter(t => t.category === 'learning').length;
+
+    const weekendCount = completed.filter(t => [0, 6].includes(new Date(t.deadline).getDay())).length;
+    const todayCount = completed.filter(t => isSameDay(new Date(t.deadline), new Date())).length;
 
     const candidates: string[] = [];
     if (count >= 1) candidates.push('first_mission');
     if (count >= 10) candidates.push('missions_10');
     if (count >= 50) candidates.push('missions_50');
     if (count >= 100) candidates.push('missions_100');
+
     if (streak >= 3) candidates.push('streak_3');
     if (streak >= 7) candidates.push('streak_7');
     if (streak >= 30) candidates.push('streak_30');
+
     if (hour >= 22) candidates.push('night_owl');
+    if (hour < 8) candidates.push('early_bird');
     if (timeSinceCreated < 60000) candidates.push('speed_demon');
+
     if (level >= 5) candidates.push('level_5');
     if (level >= 10) candidates.push('level_10');
+    if (level >= 25) candidates.push('level_25');
+
+    if (xp >= 1000) candidates.push('xp_1000');
+    if (xp >= 5000) candidates.push('xp_5000');
+
     if (categoriesUsed.size >= 5) candidates.push('all_categories');
+    if (workCount >= 25) candidates.push('work_master');
+    if (personalCount >= 25) candidates.push('personal_master');
+    if (healthCount >= 25) candidates.push('health_master');
+    if (learningCount >= 25) candidates.push('learning_master');
+
+    if (weekendCount >= 10) candidates.push('weekend_warrior');
+    if (todayCount >= 5) candidates.push('marathon');
+    if (tasks.length >= 10) candidates.push('pioneer');
 
     const newOne = candidates.find(k => !existing.includes(k));
     return newOne ?? null;
@@ -246,18 +282,29 @@ export const useTaskStore = create<TaskState>()(
 
             setAllStatus: (date: Date, status: 'active' | 'completed') =>
                 set((state) => {
-                    let earnedXp = 0;
+                    let xpChange = 0;
+                    const tasksToUpdate = state.tasks.filter(t =>
+                        isSameDay(new Date(t.deadline), date)
+                    );
+
                     if (status === 'completed') {
-                        const tasksToComplete = state.tasks.filter(t =>
-                            isSameDay(new Date(t.deadline), date) && t.status !== 'completed'
-                        );
-                        earnedXp = tasksToComplete.reduce((acc, t) => acc + ((t.urgency || 1) * 20), 0);
+                        // Switching to completed: add XP for those not yet awarded
+                        const toAward = tasksToUpdate.filter(t => t.status !== 'completed');
+                        xpChange = toAward.reduce((acc, t) => acc + ((t.urgency || 1) * 20), 0);
+                    } else {
+                        // Switching to active (RECALL): deduct XP for those previously awarded
+                        const toDeduct = tasksToUpdate.filter(t => t.status === 'completed' && t.xpAwarded);
+                        xpChange = -toDeduct.reduce((acc, t) => acc + ((t.urgency || 1) * 20), 0);
                     }
-                    const newXp = state.xp + earnedXp;
+
+                    const newXp = Math.max(0, state.xp + xpChange);
                     const newLevel = Math.floor(newXp / 500) + 1;
+
                     return {
                         tasks: state.tasks.map((t) =>
-                            isSameDay(new Date(t.deadline), date) ? { ...t, status } : t
+                            isSameDay(new Date(t.deadline), date)
+                                ? { ...t, status, xpAwarded: status === 'completed' }
+                                : t
                         ),
                         xp: newXp,
                         level: newLevel,

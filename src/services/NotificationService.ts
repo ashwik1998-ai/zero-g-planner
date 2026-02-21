@@ -32,7 +32,6 @@ export class NotificationService {
 
     static async requestPermission(): Promise<boolean> {
         if (!ONESIGNAL_APP_ID) {
-            alert("⚠️ Subscription Failed: VITE_ONESIGNAL_APP_ID is missing from the Vercel Build. Please redeploy.");
             return false;
         }
 
@@ -41,7 +40,6 @@ export class NotificationService {
             console.log("Current OneSignal permission:", currentPermission);
 
             if (currentPermission === 'denied' || currentPermission === false) {
-                alert("🚫 Notifications are BLOCKED in your browser settings for this site. Please click the Lock icon in the address bar and reset permissions.");
                 return false;
             }
 
@@ -56,7 +54,6 @@ export class NotificationService {
                 return finalPermission === true || finalPermission === 'granted';
             } catch (e: any) {
                 console.error("Push prompt error:", e);
-                alert("⚠️ Browser Alert: " + (e.message || "Unknown error"));
                 return false;
             }
         }
@@ -64,7 +61,6 @@ export class NotificationService {
         // Fallback for slow loads
         return new Promise((resolve) => {
             const timeoutId = setTimeout(() => {
-                alert("⚠️ OneSignal SDK stalled. Check if your Vercel URL is in OneSignal Dashboard -> Settings -> Web Config.");
                 resolve(false);
             }, 8000);
 
@@ -73,7 +69,6 @@ export class NotificationService {
                 try {
                     const perm = OneSignal.Notifications.permission;
                     if (perm === 'denied' || perm === false) {
-                        alert("🚫 Notifications are BLOCKED in your browser settings.");
                         resolve(false);
                         return;
                     }

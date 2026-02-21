@@ -622,6 +622,17 @@ function MainApp() {
         onToggleAchievements={() => setShowAchievements(v => !v)}
         onToggleLeaderboard={() => setShowLeaderboard(v => !v)}
         onToggleEvents={() => setShowEvents(v => !v)}
+        selectedDate={selectedDate}
+        onAbortAll={() => {
+          if (window.confirm(`Are you sure you want to abort all missions for ${selectedDate.toLocaleDateString()}?`)) {
+            const deleteTasksByDate = useTaskStore.getState().deleteTasksByDate;
+            const tasks = useTaskStore.getState().tasks;
+            const tasksToDelete = tasks.filter(t => isSameDay(new Date(t.deadline), selectedDate));
+            deleteTasksByDate(selectedDate);
+            if (clerkUser) MongoService.deleteTasksByDate(tasksToDelete);
+            SoundService.playClick();
+          }
+        }}
       />
       <DataSync />
 
@@ -702,7 +713,7 @@ function MainApp() {
 
           {/* Floating Quick-Add — desktop top-right / mobile FAB is below */}
           {!isMobile && (
-            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 50, fontFamily: 'Inter, system-ui, sans-serif' }}>
+            <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 1100, fontFamily: 'Inter, system-ui, sans-serif' }}>
               <button
                 onClick={() => setShowQuickAdd(v => !v)}
                 style={{
@@ -720,27 +731,52 @@ function MainApp() {
               </button>
 
               {showQuickAdd && (
-                <div style={{
-                  marginTop: '10px',
-                  background: 'rgba(5,5,20,0.97)',
-                  border: '1px solid rgba(59,130,246,0.25)',
-                  borderRadius: '16px', padding: '18px',
-                  width: '280px',
-                  boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 30px rgba(59,130,246,0.1)',
-                  backdropFilter: 'blur(12px)',
-                }}>
-                  <MissionForm
-                    qaTitle={qaTitle} setQaTitle={setQaTitle}
-                    qaDate={qaDate} setQaDate={setQaDate}
-                    qaTime={qaTime} setQaTime={setQaTime}
-                    qaDesc={qaDesc} setQaDesc={setQaDesc}
-                    qaCategory={qaCategory} setQaCategory={setQaCategory}
-                    qaColor={qaColor} setQaColor={setQaColor}
-                    showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
-                    qaReminderOffset={qaReminderOffset} setQaReminderOffset={setQaReminderOffset}
-                    onSubmit={handleQuickAdd}
+                <>
+                  {/* Backdrop */}
+                  <div
+                    onClick={() => setShowQuickAdd(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: -1, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(3px)' }}
                   />
-                </div>
+
+                  {/* Modal Box */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 12px)',
+                    right: 0,
+                    width: '320px',
+                    background: 'rgba(5,5,20,0.98)',
+                    border: '1px solid rgba(59,130,246,0.3)',
+                    borderRadius: '20px',
+                    padding: '24px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.6), 0 0 30px rgba(59,130,246,0.1)',
+                    zIndex: 1,
+                    animation: 'modalSlideDown 0.3s ease-out forwards',
+                  }}>
+                    <style>
+                      {`
+                        @keyframes modalSlideDown {
+                          from { opacity: 0; transform: translateY(-10px); }
+                          to { opacity: 1; transform: translateY(0); }
+                        }
+                      `}
+                    </style>
+                    <div style={{ fontSize: '11px', color: '#60a5fa', marginBottom: '16px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Mission Initialization</span>
+                    </div>
+
+                    <MissionForm
+                      qaTitle={qaTitle} setQaTitle={setQaTitle}
+                      qaDate={qaDate} setQaDate={setQaDate}
+                      qaTime={qaTime} setQaTime={setQaTime}
+                      qaReminderOffset={qaReminderOffset} setQaReminderOffset={setQaReminderOffset}
+                      qaCategory={qaCategory} setQaCategory={setQaCategory}
+                      qaColor={qaColor} setQaColor={setQaColor}
+                      qaDesc={qaDesc} setQaDesc={setQaDesc}
+                      showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
+                      onSubmit={handleQuickAdd}
+                    />
+                  </div>
+                </>
               )}
             </div>
           )}

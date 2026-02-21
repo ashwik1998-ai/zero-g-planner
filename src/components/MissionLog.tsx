@@ -112,7 +112,7 @@ export function MissionLog({ selectedDate, onEditTask, editingTaskId }: MissionL
         if (task) {
             SoundService.playLaunch();
             completeTask(id);
-            if (user) MongoService.syncTask({ ...task, status: 'completed' }, user);
+            if (user) MongoService.syncTask({ ...task, status: 'completed', xpAwarded: true }, user);
         }
     };
 
@@ -536,84 +536,89 @@ export function MissionLog({ selectedDate, onEditTask, editingTaskId }: MissionL
                                         )}
 
                                         {/* Action buttons */}
-                                        {!isDone ? (
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (confirm('Abort this mission? Data will be permanently removed from orbit.')) {
-                                                            removeTask(task.id);
-                                                            MongoService.deleteTask(task.id);
-                                                            SoundService.playClick();
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        background: 'rgba(255,68,68,0.1)',
-                                                        border: '1px solid rgba(255,68,68,0.2)',
-                                                        borderRadius: '8px', color: '#ff4444',
-                                                        fontSize: '11px', fontWeight: 600,
-                                                        cursor: 'pointer', transition: 'all 0.2s',
-                                                        fontFamily: 'Inter, system-ui, sans-serif',
-                                                    }}
-                                                    title="Abort Mission"
-                                                >
-                                                    🗑️
-                                                </button>
-                                                <button
-                                                    onClick={() => startEditing(task)}
-                                                    style={{
-                                                        flex: 1, padding: '6px 10px',
-                                                        background: 'rgba(255,255,255,0.04)',
-                                                        border: '1px solid rgba(255,255,255,0.08)',
-                                                        borderRadius: '8px', color: '#9ca3af',
-                                                        fontSize: '11px', fontWeight: 600,
-                                                        textTransform: 'uppercase', letterSpacing: '0.5px',
-                                                        cursor: 'pointer', transition: 'all 0.2s',
-                                                        fontFamily: 'Inter, system-ui, sans-serif',
-                                                    }}
-                                                >
-                                                    ✏️ Edit
-                                                </button>
-                                                <button
-                                                    onClick={e => handleLaunch(e, task.id)}
-                                                    style={{
-                                                        flex: 2, padding: '6px 10px',
-                                                        background: 'linear-gradient(90deg, #f97316, #ef4444)',
-                                                        border: 'none', borderRadius: '8px',
-                                                        color: 'white', fontSize: '11px', fontWeight: 700,
-                                                        textTransform: 'uppercase', letterSpacing: '0.5px',
-                                                        cursor: 'pointer', transition: 'all 0.2s',
-                                                        fontFamily: 'Inter, system-ui, sans-serif',
-                                                        boxShadow: '0 0 12px rgba(239,68,68,0.25)',
-                                                    }}
-                                                >
-                                                    🚀 Launch
-                                                </button>
-                                            </div>
-                                        ) : (
+                                        <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 10 }}>
                                             <button
-                                                onClick={e => {
+                                                onClick={(e) => {
+                                                    e.preventDefault();
                                                     e.stopPropagation();
-                                                    SoundService.playRecall();
-                                                    updateTask(task.id, { status: 'active' });
-                                                    if (user) MongoService.syncTask({ ...task, status: 'active' }, user);
+                                                    console.log('🗑️ Aborting task:', task.id);
+                                                    if (window.confirm('Abort this mission? Data will be permanently removed from orbit.')) {
+                                                        removeTask(task.id);
+                                                        MongoService.deleteTask(task.id);
+                                                        SoundService.playClick();
+                                                    }
                                                 }}
                                                 style={{
-                                                    width: '100%', padding: '6px 10px',
-                                                    background: 'rgba(255,255,255,0.03)',
-                                                    border: '1px solid rgba(255,255,255,0.06)',
-                                                    borderRadius: '8px', color: '#4b5563',
+                                                    padding: '6px 12px',
+                                                    background: 'rgba(239,68,68,0.12)',
+                                                    border: '1px solid rgba(239,68,68,0.25)',
+                                                    borderRadius: '10px', color: '#ff4444',
                                                     fontSize: '11px', fontWeight: 600,
-                                                    textTransform: 'uppercase', letterSpacing: '0.5px',
                                                     cursor: 'pointer', transition: 'all 0.2s',
                                                     fontFamily: 'Inter, system-ui, sans-serif',
                                                 }}
-                                                title="Undo Launch"
+                                                title="Abort Mission"
                                             >
-                                                ↩ Recall Mission
+                                                🗑️
                                             </button>
-                                        )}
+
+                                            {!isDone ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => startEditing(task)}
+                                                        style={{
+                                                            flex: 1, padding: '6px 10px',
+                                                            background: 'rgba(255,255,255,0.04)',
+                                                            border: '1px solid rgba(255,255,255,0.08)',
+                                                            borderRadius: '8px', color: '#9ca3af',
+                                                            fontSize: '11px', fontWeight: 600,
+                                                            textTransform: 'uppercase', letterSpacing: '0.5px',
+                                                            cursor: 'pointer', transition: 'all 0.2s',
+                                                            fontFamily: 'Inter, system-ui, sans-serif',
+                                                        }}
+                                                    >
+                                                        ✏️ Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={e => handleLaunch(e, task.id)}
+                                                        style={{
+                                                            flex: 2, padding: '6px 10px',
+                                                            background: 'linear-gradient(90deg, #f97316, #ef4444)',
+                                                            border: 'none', borderRadius: '8px',
+                                                            color: 'white', fontSize: '11px', fontWeight: 700,
+                                                            textTransform: 'uppercase', letterSpacing: '0.5px',
+                                                            cursor: 'pointer', transition: 'all 0.2s',
+                                                            fontFamily: 'Inter, system-ui, sans-serif',
+                                                            boxShadow: '0 0 12px rgba(239,68,68,0.25)',
+                                                        }}
+                                                    >
+                                                        🚀 Launch
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        SoundService.playRecall();
+                                                        completeTask(task.id);
+                                                        if (user) MongoService.syncTask({ ...task, status: 'active', xpAwarded: false }, user);
+                                                    }}
+                                                    style={{
+                                                        flex: 1, padding: '6px 10px',
+                                                        background: 'rgba(255,255,255,0.03)',
+                                                        border: '1px solid rgba(255,255,255,0.06)',
+                                                        borderRadius: '8px', color: '#4b5563',
+                                                        fontSize: '11px', fontWeight: 600,
+                                                        textTransform: 'uppercase', letterSpacing: '0.5px',
+                                                        cursor: 'pointer', transition: 'all 0.2s',
+                                                        fontFamily: 'Inter, system-ui, sans-serif',
+                                                    }}
+                                                    title="Undo Launch"
+                                                >
+                                                    ↩ Recall Mission
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
