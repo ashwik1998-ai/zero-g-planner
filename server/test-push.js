@@ -1,7 +1,7 @@
 require('dotenv').config();
 
-const ONESIGNAL_APP_ID = process.env.VITE_ONESIGNAL_APP_ID || process.env.ONESIGNAL_APP_ID || "44fddbd1-9825-463b-9076-9da7e3cceae4";
-const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || "os_v2_app_it65xumyevddxedwtwt6hthk4ri45iae75cusw5hi3aqbidlu6envdvt4a5atcqonitfhtredxxnom2fp6btgta7qxyhrvzcvwx5qhy";
+const ONESIGNAL_APP_ID = process.env.VITE_ONESIGNAL_APP_ID || process.env.ONESIGNAL_APP_ID;
+const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
     console.error("❌ Missing OneSignal credentials in .env");
