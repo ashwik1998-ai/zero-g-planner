@@ -38,11 +38,18 @@ export class NotificationService {
 
         if (window.OneSignal && window.OneSignal.Notifications) {
             try {
-                await window.OneSignal.Notifications.requestPermission();
+                // Wrap the native request in a Promise.race to prevent infinite hanging
+                const permissionPromise = window.OneSignal.Notifications.requestPermission();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Native Push Prompt Timed Out.")), 5000)
+                );
+
+                await Promise.race([permissionPromise, timeoutPromise]);
                 const permission = window.OneSignal.Notifications.permission;
                 return permission === true || permission === 'granted';
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Push prompt error:", e);
+                alert("⚠️ Browser Blocked Request: " + (e.message || "Unknown error"));
                 return false;
             }
         }
