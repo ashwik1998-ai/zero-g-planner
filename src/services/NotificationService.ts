@@ -37,36 +37,49 @@ export class NotificationService {
         }
 
         if (window.OneSignal && window.OneSignal.Notifications) {
+            const currentPermission = window.OneSignal.Notifications.permission;
+            console.log("Current OneSignal permission:", currentPermission);
+
+            if (currentPermission === 'denied' || currentPermission === false) {
+                alert("🚫 Notifications are BLOCKED in your browser settings for this site. Please click the Lock icon in the address bar and reset permissions.");
+                return false;
+            }
+
             try {
-                // Wrap the native request in a Promise.race to prevent infinite hanging
                 const permissionPromise = window.OneSignal.Notifications.requestPermission();
                 const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error("Native Push Prompt Timed Out.")), 5000)
+                    setTimeout(() => reject(new Error("Native Push Prompt Timed Out.")), 8000)
                 );
 
                 await Promise.race([permissionPromise, timeoutPromise]);
-                const permission = window.OneSignal.Notifications.permission;
-                return permission === true || permission === 'granted';
+                const finalPermission = window.OneSignal.Notifications.permission;
+                return finalPermission === true || finalPermission === 'granted';
             } catch (e: any) {
                 console.error("Push prompt error:", e);
-                alert("⚠️ Browser Blocked Request: " + (e.message || "Unknown error"));
+                alert("⚠️ Browser Alert: " + (e.message || "Unknown error"));
                 return false;
             }
         }
 
-        // Fallback for slow loads with a strict 4-second timeout to prevent infinite UI hanging
+        // Fallback for slow loads
         return new Promise((resolve) => {
             const timeoutId = setTimeout(() => {
-                alert("⚠️ Subscription Failed: OneSignal SDK timed out. Please ensure your Vercel URL is explicitly added to your OneSignal Dashboard Web Config Settings.");
+                alert("⚠️ OneSignal SDK stalled. Check if your Vercel URL is in OneSignal Dashboard -> Settings -> Web Config.");
                 resolve(false);
-            }, 4000);
+            }, 8000);
 
             window.OneSignalDeferred.push(async function (OneSignal: any) {
                 clearTimeout(timeoutId);
                 try {
+                    const perm = OneSignal.Notifications.permission;
+                    if (perm === 'denied' || perm === false) {
+                        alert("🚫 Notifications are BLOCKED in your browser settings.");
+                        resolve(false);
+                        return;
+                    }
                     await OneSignal.Notifications.requestPermission();
-                    const permission = OneSignal.Notifications ? OneSignal.Notifications.permission : false;
-                    resolve(permission === true || permission === 'granted');
+                    const finalPerm = OneSignal.Notifications.permission;
+                    resolve(finalPerm === true || finalPerm === 'granted');
                 } catch (e) {
                     console.error("Push prompt error:", e);
                     resolve(false);
