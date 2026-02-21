@@ -129,12 +129,18 @@ function NotificationsPageContent() {
     const [subscribed, setSubscribed] = useState(false);
 
     const handleSubscribe = async () => {
+        alert("🖱️ Button Clicked! Starting OneSignal subscription process...");
         setSubscribing(true);
         try {
+            console.log("Starting NotificationService.requestPermission()...");
             const hasPermission = await NotificationService.requestPermission();
+            console.log("Permission result:", hasPermission);
             setSubscribed(hasPermission);
-        } catch (e) {
-            console.error(e);
+            if (hasPermission) alert("✅ Success! You are now subscribed.");
+            else alert("❌ Failed: Permission was denied or timed out.");
+        } catch (e: any) {
+            console.error("handleSubscribe error:", e);
+            alert("🚨 UI Error: " + (e.message || "Unknown error"));
         }
         setSubscribing(false);
     };
