@@ -15,7 +15,6 @@ interface HeaderProps {
     onToggleLeaderboard?: () => void;
     onToggleEvents?: () => void;
     onAbortAll?: () => void;
-    selectedDate?: Date;
 }
 
 const HOW_TO_USE_CONTENT = [
@@ -172,8 +171,7 @@ export function Header({
     onToggleAchievements,
     onToggleLeaderboard,
     onToggleEvents,
-    onAbortAll,
-    selectedDate
+    onAbortAll
 }: HeaderProps) {
     const { isSignedIn, user } = useUser();
     const xp = useTaskStore(state => state.xp);

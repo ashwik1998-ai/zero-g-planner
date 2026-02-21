@@ -622,7 +622,6 @@ function MainApp() {
         onToggleAchievements={() => setShowAchievements(v => !v)}
         onToggleLeaderboard={() => setShowLeaderboard(v => !v)}
         onToggleEvents={() => setShowEvents(v => !v)}
-        selectedDate={selectedDate}
         onAbortAll={() => {
           if (window.confirm(`Are you sure you want to abort all missions for ${selectedDate.toLocaleDateString()}?`)) {
             const deleteTasksByDate = useTaskStore.getState().deleteTasksByDate;
