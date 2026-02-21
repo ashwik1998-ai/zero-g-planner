@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 interface MobileNavBarProps {
-    activeTab: 'schedule' | 'orbit' | 'logs';
-    setActiveTab: (tab: 'schedule' | 'orbit' | 'logs') => void;
+    activeTab: 'schedule' | 'orbit' | 'logs' | 'events';
+    setActiveTab: (tab: 'schedule' | 'orbit' | 'logs' | 'events') => void;
     onAddMission?: () => void;
 }
 
@@ -35,6 +35,12 @@ export function MobileNavBar({ activeTab, setActiveTab, onAddMission }: MobileNa
                     icon="📅"
                     isActive={activeTab === 'schedule'}
                     onClick={() => setActiveTab('schedule')}
+                />
+                <NavButton
+                    label="Events"
+                    icon="🗓️"
+                    isActive={activeTab === 'events'}
+                    onClick={() => setActiveTab('events')}
                 />
 
                 {/* Center FAB */}

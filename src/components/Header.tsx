@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useTaskStore } from '../store/useTaskStore';
 import { SoundService } from '../services/SoundService';
-import { SignInButton, UserButton, useUser } from '@clerk/clerk-react';
+import { useUser, SignInButton, UserButton } from '@clerk/clerk-react';
 import { COUNTRIES, getCountryByCode, flagUrl } from '../data/countries';
 import { StreakBadge } from './StreakBadge';
+import { NotificationService } from '../services/NotificationService';
+import { SidebarMenu } from './SidebarMenu';
 
 interface HeaderProps {
     onChangeBg?: () => void;
@@ -11,39 +13,16 @@ interface HeaderProps {
     onToggleDashboard?: () => void;
     onToggleAchievements?: () => void;
     onToggleLeaderboard?: () => void;
+    onToggleEvents?: () => void;
 }
 
 const HOW_TO_USE_CONTENT = [
-    {
-        icon: '🪐',
-        title: 'Orbit View',
-        body: 'Your tasks orbit a central sun in 3D space. Closer = more urgent. Angle = time of day. Drag to rotate the view.',
-    },
-    {
-        icon: '📅',
-        title: 'Schedule Panel',
-        body: 'Pick a date on the calendar. Click "+ New Mission Protocol" to add a task with title, time, color, and mission details.',
-    },
-    {
-        icon: '📋',
-        title: 'Mission Log',
-        body: 'See all missions for the selected date. Click "Launch" to complete a mission and earn XP. Click "Edit" to modify it.',
-    },
-    {
-        icon: '🌟',
-        title: 'XP & Levels',
-        body: 'Complete missions to earn XP. Urgent (red) = 100 XP, Normal (orange) = 50 XP, Casual (green) = 25 XP. Level up every 500 XP.',
-    },
-    {
-        icon: '🎨',
-        title: 'Themes',
-        body: 'Click the theme button in the header center to cycle through 5 space themes: Deep Space, Nebula Blue, Cosmic Purple, Aurora Green, Red Dwarf.',
-    },
-    {
-        icon: '☁️',
-        title: 'Cloud Sync',
-        body: 'Sign in to sync your missions across devices. All data is saved to the cloud automatically when you add, edit, or complete a mission.',
-    },
+    { icon: '🪐', title: 'Orbit View', body: 'Your tasks orbit a central sun in 3D space. Closer = more urgent. Angle = time of day. Drag to rotate the view.' },
+    { icon: '📅', title: 'Schedule Panel', body: 'Pick a date on the calendar. Click "+ New Mission Protocol" to add a task with title, time, color, and mission.' },
+    { icon: '📋', title: 'Mission Log', body: 'See all missions for the selected date. Click "Launch" to complete a mission and earn XP. Click "Edit" to modify.' },
+    { icon: '🌟', title: 'XP & Levels', body: 'Complete missions to earn XP. Urgent (red) = 100 XP, Normal (orange) = 50 XP, Casual (green) = 25 XP.' },
+    { icon: '🎨', title: 'Themes', body: 'Click the theme button in the header center to cycle through 5 space themes: Deep Space, Nebula Blue, Cosmic Purple...' },
+    { icon: '☁️', title: 'Cloud Sync', body: 'Sign in to sync your missions across devices. All data is saved to the cloud automatically when you add or complete.' },
 ];
 
 // Self-contained — reads useUser() directly so it works inside Clerk's UserProfilePage
@@ -144,16 +123,59 @@ function LocationPageContent() {
     );
 }
 
+// Self-contained component for Notifications page
+function NotificationsPageContent() {
+    const [subscribing, setSubscribing] = useState(false);
+    const [subscribed, setSubscribed] = useState(false);
+
+    const handleSubscribe = async () => {
+        setSubscribing(true);
+        try {
+            const hasPermission = await NotificationService.requestPermission();
+            setSubscribed(hasPermission);
+        } catch (e) {
+            console.error(e);
+        }
+        setSubscribing(false);
+    };
+
+    return (
+        <div style={{ fontFamily: 'Inter, system-ui, sans-serif', color: '#111827', maxWidth: '480px' }}>
+            <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 700 }}>Push Notifications</h2>
+            <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#6b7280' }}>
+                Enable push notifications to get reminders for your daily missions and special events on this device.
+            </p>
+
+            <button
+                onClick={handleSubscribe}
+                disabled={subscribing || subscribed}
+                style={{
+                    background: subscribed ? '#10b981' : subscribing ? '#d1d5db' : '#3b82f6',
+                    color: 'white', border: 'none', borderRadius: '8px',
+                    padding: '10px 24px', fontSize: '13px', fontWeight: 700,
+                    cursor: (subscribing || subscribed) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s', fontFamily: 'Inter, system-ui, sans-serif',
+                }}
+            >
+                {subscribed ? '✓ Subscribed' : subscribing ? 'Subscribing…' : 'Subscribe to Notifications'}
+            </button>
+        </div>
+    );
+}
+
 export function Header({
     onChangeBg,
     currentBgLabel,
     onToggleDashboard,
     onToggleAchievements,
-    onToggleLeaderboard
+    onToggleLeaderboard,
+    onToggleEvents
 }: HeaderProps) {
     const { isSignedIn, user } = useUser();
     const xp = useTaskStore(state => state.xp);
     const level = useTaskStore(state => state.level);
+    const soundTheme = useTaskStore(state => state.soundTheme);
+    const setSoundTheme = useTaskStore(state => state.setSoundTheme);
     const [isMuted, setIsMuted] = useState(SoundService.isMuted);
     const [showInstructions, setShowInstructions] = useState(false);
     const [showHowToUse, setShowHowToUse] = useState(false);
@@ -213,8 +235,15 @@ export function Header({
                 position: 'relative',
                 fontFamily: 'Inter, system-ui, sans-serif',
             }}>
-                {/* LEFT: Logo + Level + How to Play */}
+                {/* LEFT: Logo + Level + Hamburger */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <SidebarMenu
+                        onToggleDashboard={onToggleDashboard}
+                        onToggleLeaderboard={onToggleLeaderboard}
+                        onToggleEvents={onToggleEvents}
+                        onToggleHowToUse={() => setShowHowToUse(true)}
+                    />
+
                     <span style={{
                         fontSize: '17px', fontWeight: 800, letterSpacing: '-0.5px',
                         background: 'linear-gradient(90deg, #60a5fa, #06b6d4)',
@@ -271,34 +300,6 @@ export function Header({
                 {/* CENTER: Feature Buttons */}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
                     <button
-                        onClick={() => { onToggleDashboard?.(); SoundService.playClick(); }}
-                        title="Mission Control Dashboard (D)"
-                        style={{
-                            background: 'rgba(59,130,246,0.1)',
-                            border: '1px solid rgba(59,130,246,0.2)',
-                            cursor: 'pointer', color: '#60a5fa',
-                            padding: '6px 12px', borderRadius: '12px',
-                            fontSize: '12px', fontWeight: 600,
-                            transition: 'all 0.2s',
-                        }}
-                    >
-                        📊
-                    </button>
-                    <button
-                        onClick={() => { onToggleLeaderboard?.(); SoundService.playClick(); }}
-                        title="Galactic Leaderboard (L)"
-                        style={{
-                            background: 'rgba(251,191,36,0.1)',
-                            border: '1px solid rgba(251,191,36,0.2)',
-                            cursor: 'pointer', color: '#fbbf24',
-                            padding: '6px 12px', borderRadius: '12px',
-                            fontSize: '12px', fontWeight: 600,
-                            transition: 'all 0.2s',
-                        }}
-                    >
-                        🌌
-                    </button>
-                    <button
                         onClick={() => { onToggleAchievements?.(); SoundService.playClick(); }}
                         title="Achievements (A)"
                         style={{
@@ -332,9 +333,42 @@ export function Header({
                             🎨 {currentBgLabel}
                         </button>
                     )}
+
+                    <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 8px' }} />
+
+                    {/* Sound Theme Selector */}
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <select
+                            value={soundTheme}
+                            onChange={(e) => {
+                                setSoundTheme(e.target.value as any);
+                                SoundService.playClick();
+                            }}
+                            onMouseEnter={() => SoundService.playHover()}
+                            title="Audio Theme"
+                            style={{
+                                background: 'rgba(255,255,255,0.06)',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                cursor: 'pointer', color: '#d1d5db',
+                                padding: '6px 12px', borderRadius: '24px',
+                                fontSize: '12px', fontWeight: 500,
+                                transition: 'all 0.2s',
+                                appearance: 'none',
+                                outline: 'none',
+                                fontFamily: 'Inter, system-ui, sans-serif'
+                            }}
+                        >
+                            <option value="default" style={{ background: '#1f2937' }}>🎵 Default</option>
+                            <option value="naruto" style={{ background: '#1f2937' }}>🦊 Naruto</option>
+                            <option value="onepiece" style={{ background: '#1f2937' }}>🏴‍☠️ One Piece</option>
+                            <option value="frieren" style={{ background: '#1f2937' }}>🧝‍♀️ Frieren</option>
+                        </select>
+                        <span style={{ position: 'absolute', right: '10px', fontSize: '10px', pointerEvents: 'none', color: '#9ca3af' }}>▾</span>
+                    </div>
+
                 </div>
 
-                {/* RIGHT: Sound + How to Use + Auth */}
+                {/* RIGHT: Sound + Auth */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
                     {/* Sound */}
                     <button
@@ -348,24 +382,6 @@ export function Header({
                         }}
                     >
                         {isMuted ? '🔇' : '🔊'}
-                    </button>
-
-                    {/* How to Use — near sign in */}
-                    <button
-                        onClick={() => { setShowHowToUse(true); SoundService.playClick(); }}
-                        onMouseEnter={() => SoundService.playHover()}
-                        title="How to Use Zero-G Planner"
-                        style={{
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            cursor: 'pointer', color: '#9ca3af',
-                            padding: '6px 12px', borderRadius: '20px',
-                            fontSize: '12px', fontWeight: 500,
-                            transition: 'all 0.2s', whiteSpace: 'nowrap',
-                            display: 'flex', alignItems: 'center', gap: '5px',
-                        }}
-                    >
-                        📖 How to Use
                     </button>
 
                     {/* Divider */}
@@ -478,6 +494,13 @@ export function Header({
                                         url="location"
                                     >
                                         <LocationPageContent />
+                                    </UserButton.UserProfilePage>
+                                    <UserButton.UserProfilePage
+                                        label="Notifications"
+                                        labelIcon={<span style={{ fontSize: '14px', marginLeft: '2px' }}>🔔</span>}
+                                        url="notifications"
+                                    >
+                                        <NotificationsPageContent />
                                     </UserButton.UserProfilePage>
                                 </UserButton>
                             </div>

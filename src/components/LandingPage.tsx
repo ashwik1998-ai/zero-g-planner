@@ -8,6 +8,7 @@ const FEATURES = [
     { icon: '🪐', title: 'Orbital Mission View', desc: 'Visualize tasks as planets orbiting a star. Urgency = proximity. Your day, mapped to the cosmos.' },
     { icon: '🚀', title: 'Launch & Track', desc: 'Complete missions by launching them into orbit. Earn XP, level up, and watch productivity soar.' },
     { icon: '📅', title: 'Mission Calendar', desc: 'Plan missions by date. Switch days instantly — no clutter, just your daily objectives.' },
+    { icon: '🗓️', title: 'Special Event Messages', desc: 'Schedule birthdays, anniversaries, and one-off events with specific times. Subscribe for direct push alerts on your device.' },
     { icon: '☁️', title: 'Cloud Sync', desc: 'Your missions follow you everywhere. Sign in on any device, data restored instantly.' },
     { icon: '🎮', title: 'Gamified XP System', desc: 'Every completed mission earns XP. Level up your commander rank and make productivity a game.' },
     { icon: '🎨', title: 'Dynamic Themes', desc: 'Switch between 5 space themes — Deep Space, Nebula, Cosmic Purple, Aurora, Red Dwarf.' },

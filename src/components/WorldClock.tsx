@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { COUNTRIES, getCountryByCode, flagUrl } from '../data/countries';
+import { getCountryByCode, flagUrl } from '../data/countries';
 
 interface WorldClockProps {
     homeCountryCode?: string; // from Clerk metadata
@@ -9,7 +9,6 @@ export function WorldClock({ homeCountryCode = 'IN' }: WorldClockProps) {
     const [selectedCode, setSelectedCode] = useState(homeCountryCode);
     const [time, setTime] = useState('');
     const [date, setDate] = useState('');
-    const [showDropdown, setShowDropdown] = useState(false);
 
     const country = getCountryByCode(selectedCode);
 
@@ -57,9 +56,8 @@ export function WorldClock({ homeCountryCode = 'IN' }: WorldClockProps) {
                         World Clock
                     </span>
                 </div>
-                {/* Country selector button */}
-                <button
-                    onClick={() => setShowDropdown(v => !v)}
+                {/* Country display */}
+                <div
                     style={{
                         background: 'rgba(255,255,255,0.05)',
                         border: '1px solid rgba(255,255,255,0.1)',
@@ -67,7 +65,6 @@ export function WorldClock({ homeCountryCode = 'IN' }: WorldClockProps) {
                         padding: '4px 8px',
                         color: '#d1d5db',
                         fontSize: '11px',
-                        cursor: 'pointer',
                         display: 'flex', alignItems: 'center', gap: '6px',
                         fontFamily: 'Inter, system-ui, sans-serif',
                         fontWeight: 500,
@@ -78,8 +75,8 @@ export function WorldClock({ homeCountryCode = 'IN' }: WorldClockProps) {
                         alt={country.name}
                         style={{ width: '16px', height: '12px', borderRadius: '2px', objectFit: 'cover' }}
                     />
-                    {country.name.split(' (')[0]} ▾
-                </button>
+                    {country.name.split(' (')[0]}
+                </div>
             </div>
 
             {/* Clock display */}
@@ -106,54 +103,6 @@ export function WorldClock({ homeCountryCode = 'IN' }: WorldClockProps) {
                     {country.name.split(' (')[0]}
                 </div>
             </div>
-
-            {/* Dropdown */}
-            {showDropdown && (
-                <div style={{
-                    position: 'absolute',
-                    bottom: '100%',
-                    left: '14px',
-                    right: '14px',
-                    background: 'rgba(5,5,20,0.99)',
-                    border: '1px solid rgba(59,130,246,0.25)',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    zIndex: 100,
-                    boxShadow: '0 -8px 30px rgba(0,0,0,0.5)',
-                    maxHeight: '220px',
-                    overflowY: 'auto',
-                }}>
-                    {COUNTRIES.map(c => (
-                        <div
-                            key={c.code}
-                            onClick={() => { setSelectedCode(c.code); setShowDropdown(false); }}
-                            style={{
-                                padding: '9px 14px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                fontSize: '12px',
-                                color: selectedCode === c.code ? '#60a5fa' : '#d1d5db',
-                                background: selectedCode === c.code ? 'rgba(59,130,246,0.1)' : 'transparent',
-                                borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                transition: 'background 0.15s',
-                                fontWeight: selectedCode === c.code ? 600 : 400,
-                            }}
-                        >
-                            <img
-                                src={flagUrl(c.iso2, '24x18')}
-                                alt={c.name}
-                                style={{ width: '20px', height: '15px', borderRadius: '2px', objectFit: 'cover', flexShrink: 0 }}
-                            />
-                            <span style={{ flex: 1 }}>{c.name}</span>
-                            {selectedCode === c.code && (
-                                <span style={{ fontSize: '11px', color: '#10b981' }}>✓</span>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
         </div>
     );
 }

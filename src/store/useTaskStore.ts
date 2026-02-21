@@ -5,6 +5,7 @@ import { isSameDay, isYesterday } from 'date-fns';
 
 export type TaskCategory = 'work' | 'personal' | 'health' | 'learning' | 'other';
 export type Recurrence = 'daily' | 'weekly' | 'monthly' | null;
+export type SoundTheme = 'default' | 'naruto' | 'onepiece' | 'frieren';
 
 export interface Subtask {
     id: string;
@@ -27,6 +28,7 @@ export interface Task {
     subtasks?: Subtask[];
     groupId?: string;
     completionNote?: string;
+    reminderOffset?: number; // Minutes before deadline (0 = exact time)
 }
 
 export const ACHIEVEMENT_DEFS: Record<string, { label: string; desc: string; icon: string }> = {
@@ -64,7 +66,9 @@ interface TaskState {
     addSubtask: (taskId: string, text: string) => void;
     toggleSubtask: (taskId: string, subtaskId: string) => void;
     removeSubtask: (taskId: string, subtaskId: string) => void;
-    setUserData: (data: { xp: number; level: number; streak: number; achievements: string[]; lastCompletedDate: string | null }) => void;
+    setUserData: (data: { xp: number; level: number; streak: number; achievements: string[]; lastCompletedDate: string | null; soundTheme: SoundTheme }) => void;
+    soundTheme: SoundTheme;
+    setSoundTheme: (theme: SoundTheme) => void;
 }
 
 function checkAchievements(
@@ -109,6 +113,9 @@ export const useTaskStore = create<TaskState>()(
             lastCompletedDate: null,
             achievements: [],
             newAchievement: null,
+            soundTheme: 'default',
+
+            setSoundTheme: (theme) => set({ soundTheme: theme }),
 
             clearNewAchievement: () => set({ newAchievement: null }),
 
@@ -128,6 +135,7 @@ export const useTaskStore = create<TaskState>()(
                         color: '#3b82f6',
                         xpAwarded: false,
                         subtasks: [],
+                        reminderOffset: 0,
                         ...task,
                     };
                     return { tasks: [...state.tasks, newTask] };
@@ -302,6 +310,7 @@ export const useTaskStore = create<TaskState>()(
                     streak: data.streak,
                     achievements: data.achievements,
                     lastCompletedDate: data.lastCompletedDate,
+                    soundTheme: data.soundTheme,
                 })),
         }),
         {
@@ -313,6 +322,7 @@ export const useTaskStore = create<TaskState>()(
                 streak: state.streak,
                 lastCompletedDate: state.lastCompletedDate,
                 achievements: state.achievements,
+                soundTheme: state.soundTheme,
             }),
         }
     )

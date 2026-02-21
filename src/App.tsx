@@ -23,6 +23,8 @@ import { AsteroidBelt } from './components/AsteroidBelt';
 import { CategoryRing } from './components/CategoryRing';
 import { ConstellationLines } from './components/ConstellationLines';
 import { BlackHole } from './components/BlackHole';
+import { EventsPanel } from './components/EventsPanel';
+import { useEventStore } from './store/useEventStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { NotificationService } from './services/NotificationService';
 import { SoundService } from './services/SoundService';
@@ -69,6 +71,7 @@ function DataSync() {
             subtasks: m.subtasks || [],
             groupId: m.groupId,
             completionNote: m.completionNote,
+            reminderOffset: m.reminderOffset || 0,
           }));
           setTasks(parsedMissions);
           console.log(`✅ Loaded ${parsedMissions.length} missions from Cloud.`);
@@ -312,7 +315,7 @@ function AppContent() {
 function MissionForm({
   qaTitle, setQaTitle, qaDate, setQaDate, qaTime, setQaTime,
   qaDesc, setQaDesc, qaCategory, setQaCategory, qaColor, setQaColor,
-  showCategoryMenu, setShowCategoryMenu, onSubmit,
+  showCategoryMenu, setShowCategoryMenu, qaReminderOffset, setQaReminderOffset, onSubmit,
 }: {
   qaTitle: string; setQaTitle: (v: string) => void;
   qaDate: string; setQaDate: (v: string) => void;
@@ -321,6 +324,7 @@ function MissionForm({
   qaCategory: TaskCategory; setQaCategory: (v: TaskCategory) => void;
   qaColor: string; setQaColor: (v: string) => void;
   showCategoryMenu: boolean; setShowCategoryMenu: (v: boolean) => void;
+  qaReminderOffset: number; setQaReminderOffset: (v: number) => void;
   onSubmit: () => void;
 }) {
   const inputStyle: React.CSSProperties = {
@@ -341,6 +345,30 @@ function MissionForm({
         <input type="date" value={qaDate} onChange={e => setQaDate(e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
         <input type="time" value={qaTime} onChange={e => setQaTime(e.target.value)} style={{ ...inputStyle, flex: 1, marginBottom: 0 }} />
       </div>
+
+      {/* Reminder Offset */}
+      <div style={{ marginBottom: '10px' }}>
+        <select
+          value={qaReminderOffset.toString()}
+          onChange={e => setQaReminderOffset(parseInt(e.target.value))}
+          style={{
+            ...inputStyle,
+            marginBottom: 0,
+            appearance: 'none',
+            cursor: 'pointer',
+            backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px top 50%',
+            backgroundSize: '10px auto',
+          }}
+        >
+          <option value="0" style={{ background: '#1f2937' }}>🔔 At time of event</option>
+          <option value="30" style={{ background: '#1f2937' }}>🔔 30 minutes before</option>
+          <option value="60" style={{ background: '#1f2937' }}>🔔 1 hour before</option>
+          <option value="120" style={{ background: '#1f2937' }}>🔔 2 hours before</option>
+        </select>
+      </div>
+
       {/* Category */}
       <div style={{ marginBottom: '10px', position: 'relative' }}>
         <div onClick={() => setShowCategoryMenu(!showCategoryMenu)} style={{
@@ -374,7 +402,7 @@ function MissionForm({
       </div>
       {/* Colors */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-        {['#ff4444', '#ffaa00', '#00cc88', '#3b82f6', '#a855f7'].map(c => (
+        {['#ff4444', '#ffaa00', '#00cc88'].map(c => (
           <div key={c} onClick={() => setQaColor(c)} style={{
             flex: 1, height: '30px', background: c, borderRadius: '8px', cursor: 'pointer',
             border: qaColor === c ? '2px solid white' : '2px solid transparent',
@@ -426,11 +454,13 @@ function MainApp() {
   const [qaCategory, setQaCategory] = useState<TaskCategory>('work');
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [qaColor, setQaColor] = useState('#ff4444');
+  const [qaReminderOffset, setQaReminderOffset] = useState<number>(0);
   const [activeBubbleId, setActiveBubbleId] = useState<string | null>(null);
   // New UI Overlays
   const [showDashboard, setShowDashboard] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showEvents, setShowEvents] = useState(false);
   const [focusTask, setFocusTask] = useState<any | null>(null);
 
   // Black hole effect state
@@ -443,6 +473,7 @@ function MainApp() {
   const achievements = useTaskStore((state) => state.achievements);
   const lastCompletedDate = useTaskStore((state) => state.lastCompletedDate);
   const setUserData = useTaskStore((state) => state.setUserData);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // 1. Hydrate user data from backend on login
   useEffect(() => {
@@ -456,16 +487,24 @@ function MainApp() {
             level: data.level,
             streak: data.streak || 0,
             achievements: data.achievements || [],
-            lastCompletedDate: data.lastCompletedDate || null
+            lastCompletedDate: data.lastCompletedDate || null,
+            soundTheme: data.soundTheme || 'default'
           });
         }
+        setIsHydrated(true);
       });
+
+      // Initialize Events
+      useEventStore.getState().initialize(userId);
+
+      // Register Push Notifications User ID
+      NotificationService.loginUser(userId);
     }
   }, [clerkUser, setUserData]);
 
   // 2. Sync Stats to Leaderboard whenever they change
   useEffect(() => {
-    if (clerkUser && xp >= 0) {
+    if (clerkUser && xp >= 0 && isHydrated) {
       // console.log('🔄 Syncing stats to backend:', { xp, streak, achievements: achievements.length });
       MongoService.syncLeaderboard({
         userId: clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.id,
@@ -478,7 +517,7 @@ function MainApp() {
         lastCompletedDate
       });
     }
-  }, [xp, level, streak, achievements, lastCompletedDate, clerkUser]);
+  }, [xp, level, streak, achievements, lastCompletedDate, clerkUser, isHydrated]);
 
   // Derive timezone from user's saved nationality
   const nationalityCode = (clerkUser?.unsafeMetadata?.nationality as string) ?? 'IN';
@@ -501,17 +540,19 @@ function MainApp() {
       status: 'active' as const,
       xpAwarded: false,
       createdAt: new Date(),
+      reminderOffset: qaReminderOffset,
     };
     addTask(newTask);
     if (clerkUser) MongoService.syncTask(newTask, clerkUser);
 
     // Schedule notification
     NotificationService.requestPermission().then(granted => {
-      if (granted) NotificationService.scheduleForTask(newId, qaTitle, deadline);
+      if (granted) NotificationService.scheduleForTask(newId, qaTitle, deadline, qaReminderOffset);
     });
 
     setQaTitle(''); setQaDate(new Date().toISOString().split('T')[0]);
     setQaTime('12:00'); setQaColor('#00cc88'); setQaDesc('');
+    setQaReminderOffset(0);
     setShowQuickAdd(false);
   };
 
@@ -530,12 +571,10 @@ function MainApp() {
     }
   });
 
-  // Sync notifications on load
+  // Initialize OneSignal on load
   useEffect(() => {
-    NotificationService.requestPermission().then(granted => {
-      if (granted) NotificationService.scheduleAll(tasks);
-    });
-  }, [tasks]);
+    NotificationService.initialize();
+  }, []);
 
 
   const isMobile = useMobile();
@@ -582,6 +621,7 @@ function MainApp() {
         onToggleDashboard={() => setShowDashboard(v => !v)}
         onToggleAchievements={() => setShowAchievements(v => !v)}
         onToggleLeaderboard={() => setShowLeaderboard(v => !v)}
+        onToggleEvents={() => setShowEvents(v => !v)}
       />
       <DataSync />
 
@@ -600,7 +640,10 @@ function MainApp() {
         {/* LEFT: Calendar (desktop only - on mobile it goes below) */}
         {!isMobile && (
           <div style={{ width: leftWidth, position: 'relative', flexShrink: 0, zIndex: 20 }}>
-            <CalendarWindow selectedDate={selectedDate} onDateChange={setSelectedDate} />
+            <CalendarWindow
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
             <div
               onMouseDown={() => setIsResizingLeft(true)}
               style={{ position: 'absolute', right: 0, top: 0, width: '6px', height: '100%', cursor: 'col-resize', zIndex: 100, borderRight: '1px solid rgba(255,255,255,0.1)' }}
@@ -694,6 +737,7 @@ function MainApp() {
                     qaCategory={qaCategory} setQaCategory={setQaCategory}
                     qaColor={qaColor} setQaColor={setQaColor}
                     showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
+                    qaReminderOffset={qaReminderOffset} setQaReminderOffset={setQaReminderOffset}
                     onSubmit={handleQuickAdd}
                   />
                 </div>
@@ -736,6 +780,7 @@ function MainApp() {
                   qaCategory={qaCategory} setQaCategory={setQaCategory}
                   qaColor={qaColor} setQaColor={setQaColor}
                   showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
+                  qaReminderOffset={qaReminderOffset} setQaReminderOffset={setQaReminderOffset}
                   onSubmit={handleQuickAdd}
                 />
               </div>
@@ -939,6 +984,7 @@ function MainApp() {
                 qaCategory={qaCategory} setQaCategory={setQaCategory}
                 qaColor={qaColor} setQaColor={setQaColor}
                 showCategoryMenu={showCategoryMenu} setShowCategoryMenu={setShowCategoryMenu}
+                qaReminderOffset={qaReminderOffset} setQaReminderOffset={setQaReminderOffset}
                 onSubmit={handleQuickAdd}
               />
             </div>
@@ -950,6 +996,7 @@ function MainApp() {
       <AchievementToast />
       {showDashboard && <Dashboard onClose={() => setShowDashboard(false)} />}
       {showAchievements && <AchievementsPanel onClose={() => setShowAchievements(false)} />}
+      {showEvents && <EventsPanel onClose={() => setShowEvents(false)} />}
       {showLeaderboard && (
         <LeaderboardPanel
           onClose={() => setShowLeaderboard(false)}

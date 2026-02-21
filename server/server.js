@@ -14,6 +14,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const Mission = require('./models/Mission');
 const Leaderboard = require('./models/Leaderboard');
+const Event = require('./models/Event');
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.post('/api/missions/sync', async (req, res) => {
             subtasks: task.subtasks,
             groupId: task.groupId,
             completionNote: task.completionNote,
+            reminderOffset: task.reminderOffset || 0,
         };
 
 
@@ -127,6 +129,149 @@ app.delete('/api/missions/:taskId', async (req, res) => {
     }
 });
 
+// --- EVENT ROUTES ---
+
+/**
+ * Helper to schedule notifications via OneSignal
+ * - Push (Standard Desktop/Mobile Notification)
+ */
+async function scheduleOneSignalEvent(event, userEmail) {
+    const ONESIGNAL_APP_ID = process.env.VITE_ONESIGNAL_APP_ID || process.env.ONESIGNAL_APP_ID;
+    const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
+
+    // Check if event is in the past
+    if (new Date(event.date) < new Date()) return;
+
+    if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
+        console.log(`[OneSignal] Skipped scheduling "${event.title}" - Missing API Keys.`);
+        return;
+    }
+    // Calculate offset
+    const offsetMinutes = event.reminderOffset || 0;
+    const targetDate = new Date(event.date);
+    if (offsetMinutes > 0) {
+        targetDate.setMinutes(targetDate.getMinutes() - offsetMinutes);
+    }
+
+    // Check if the scheduled time is already in the past
+    if (targetDate < new Date()) {
+        console.log(`[OneSignal] Skipped scheduling "${event.title}" - Send time is in the past.`);
+        return;
+    }
+
+    const sendAfter = targetDate.toISOString();
+
+    try {
+        const payload = {
+            app_id: ONESIGNAL_APP_ID,
+            include_aliases: { "external_id": [userEmail] },
+            send_after: sendAfter,
+            target_channel: "push",
+            headings: { en: "🗓️ Upcoming Special Event" },
+            contents: { en: event.title }
+        };
+
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.id) {
+            console.log(`[OneSignal] ✅ Scheduled Push for "${event.title}"`);
+        } else {
+            console.warn(`[OneSignal] ⚠️ Push failed:`, data);
+        }
+
+    } catch (error) {
+        console.error(`[OneSignal] ❌ Routing Error:`, error.message);
+    }
+}
+
+/**
+ * GET /api/events
+ * Retrieves all events for a specific user.
+ */
+app.get('/api/events', async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'Missing userId parameter' });
+
+    try {
+        const events = await Event.find({ userId });
+        res.json(events);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * POST /api/events/sync
+ * Creates or Updates an event based on its ID.
+ */
+app.post('/api/events/sync', async (req, res) => {
+    const { event, user } = req.body;
+
+    if (!event || !user) {
+        return res.status(400).json({ success: false, error: "Missing event or user data" });
+    }
+
+    try {
+        const eventData = {
+            userId: user.email,
+            id: event.id,
+            title: event.title,
+            date: event.date,
+            isAllDay: event.isAllDay || false,
+            color: event.color || '#3b82f6',
+            icon: event.icon || '📅',
+            category: event.category || 'other',
+            recurrence: event.recurrence || 'none',
+        };
+
+        const result = await Event.findOneAndUpdate(
+            { id: event.id, userId: user.email },
+            eventData,
+            { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+        );
+
+        // Schedule Notification
+        scheduleOneSignalEvent(eventData, user.email);
+
+        console.log(`📅 Synced event "${event.title}" for ${user.email}`);
+        res.json({ success: true, event: result });
+
+    } catch (error) {
+        console.error("❌ Event Sync Error:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// DELETE: Remove Event
+app.delete('/api/events/:id', async (req, res) => {
+    const { id } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) return res.status(400).json({ error: 'Missing userId parameter' });
+
+    try {
+        const result = await Event.findOneAndDelete({ id, userId });
+        if (result) {
+            console.log(`🗑️ Deleted event "${result.title}"`);
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ success: false, error: 'Event not found' });
+        }
+    } catch (error) {
+        console.error("❌ Delete Event Error:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // --- LEADERBOARD ROUTES ---
 
 /**
@@ -147,7 +292,7 @@ app.get('/api/leaderboard', async (req, res) => {
  * Updates a user's XP, Level, and Profile info on the leaderboard.
  */
 app.post('/api/leaderboard/sync', async (req, res) => {
-    const { userId, displayName, avatar, xp, level, streak, achievements, lastCompletedDate } = req.body;
+    const { userId, displayName, avatar, xp, level, streak, achievements, lastCompletedDate, soundTheme } = req.body;
     try {
         const entry = await Leaderboard.findOneAndUpdate(
             { userId },
@@ -156,6 +301,7 @@ app.post('/api/leaderboard/sync', async (req, res) => {
                 streak: streak || 0,
                 achievements: achievements || [],
                 lastCompletedDate: lastCompletedDate || null,
+                soundTheme: soundTheme, // Add soundTheme here
                 lastSync: new Date()
             },
             { upsert: true, returnDocument: 'after' }

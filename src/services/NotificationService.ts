@@ -1,56 +1,98 @@
+declare global {
+    interface Window {
+        OneSignalDeferred: any[];
+        OneSignal: any;
+    }
+}
+
+// NOTE: You'll need to create an account at onesignal.com 
+// and insert your App ID here for full functionality.
+const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || '';
+
 export class NotificationService {
-    private static timers: Map<string, ReturnType<typeof setTimeout>> = new Map();
-    private static permission: NotificationPermission = 'default';
+    private static initialized = false;
+
+    static initialize(): void {
+        if (this.initialized || !ONESIGNAL_APP_ID) {
+            if (!ONESIGNAL_APP_ID) console.warn("OneSignal App ID is missing in .env.");
+            return;
+        }
+
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push(async function (OneSignal: any) {
+            await OneSignal.init({
+                appId: ONESIGNAL_APP_ID,
+                allowLocalhostAsSecureOrigin: true, // Needed for local dev
+            });
+            console.log("🔔 Vanilla OneSignal Initialized");
+        });
+
+        this.initialized = true;
+    }
 
     static async requestPermission(): Promise<boolean> {
-        if (!('Notification' in window)) return false;
-        if (Notification.permission === 'granted') {
-            this.permission = 'granted';
-            return true;
+        if (window.OneSignal && window.OneSignal.Notifications) {
+            try {
+                // We directly request native permission because Chrome requires 
+                // this to stay synchronous with the user's click event.
+                await window.OneSignal.Notifications.requestPermission();
+                const permission = window.OneSignal.Notifications.permission;
+                return permission === true || permission === 'granted';
+            } catch (e) {
+                console.error("Push prompt error:", e);
+                return false;
+            }
         }
-        const result = await Notification.requestPermission();
-        this.permission = result;
-        return result === 'granted';
-    }
 
-    static scheduleForTask(taskId: string, title: string, deadline: Date): void {
-        // Cancel existing timer for this task
-        this.cancelForTask(taskId);
-
-        const msUntilDeadline = deadline.getTime() - Date.now();
-        const msUntilAlert = msUntilDeadline - 15 * 60 * 1000; // 15 min before
-
-        if (msUntilAlert <= 0 || this.permission !== 'granted') return;
-
-        const timer = setTimeout(() => {
-            new Notification('🚀 Mission Alert — Zero-G Planner', {
-                body: `"${title}" launches in 15 minutes!`,
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
-                tag: taskId,
+        // Fallback for slow loads
+        return new Promise((resolve) => {
+            window.OneSignalDeferred.push(async function (OneSignal: any) {
+                try {
+                    await OneSignal.Notifications.requestPermission();
+                    const permission = OneSignal.Notifications ? OneSignal.Notifications.permission : false;
+                    resolve(permission === true || permission === 'granted');
+                } catch (e) {
+                    console.error("Push prompt error:", e);
+                    resolve(false);
+                }
             });
-            this.timers.delete(taskId);
-        }, msUntilAlert);
-
-        this.timers.set(taskId, timer);
+        });
     }
 
-    static cancelForTask(taskId: string): void {
-        const timer = this.timers.get(taskId);
-        if (timer) {
-            clearTimeout(timer);
-            this.timers.delete(taskId);
-        }
+    // Set the user identifier in OneSignal to tie push tokens to the Clerk User ID
+    static loginUser(userId: string): void {
+        window.OneSignalDeferred.push(async function (OneSignal: any) {
+            try {
+                if (OneSignal.User && OneSignal.User.PushSubscription) {
+                    await OneSignal.login(userId);
+                    console.log(`👤 Linked OneSignal to User ID: ${userId}`);
+                }
+            } catch (error) {
+                console.error("❌ OneSignal Login Error:", error);
+            }
+        });
+    }
+
+    // Sync external contact info for multi-channel targeting
+    // (Email/SMS logic removed per user request)
+
+    // Since Push is managed backend-side via OneSignal API, we remove the local timeout-based scheduling
+    // and instead use this space to prepare for backend interaction. 
+    //
+    // For now, keeping semantic stubs so app logic doesn't break.
+    static scheduleForTask(_taskId: string, _title: string, _deadline: Date, _offsetMinutes?: number): void {
+        // Not needed for OneSignal: Push scheduling should happen on the backend server
+    }
+
+    static cancelForTask(_taskId: string): void {
+        // Handled by backend
     }
 
     static cancelAll(): void {
-        this.timers.forEach(t => clearTimeout(t));
-        this.timers.clear();
+        // Handled by backend
     }
 
-    static scheduleAll(tasks: { id: string; title: string; deadline: Date; status: string }[]): void {
-        tasks
-            .filter(t => t.status === 'active' && new Date(t.deadline) > new Date())
-            .forEach(t => this.scheduleForTask(t.id, t.title, new Date(t.deadline)));
+    static scheduleAll(_tasks: any[]): void {
+        // Handled by backend syncing
     }
 }

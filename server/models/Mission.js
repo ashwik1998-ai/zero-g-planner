@@ -16,6 +16,7 @@ const MissionSchema = new mongoose.Schema({
     subtasks: { type: Array, default: [] },
     groupId: { type: String },
     completionNote: { type: String },
+    reminderOffset: { type: Number, default: 0 },
 }, {
     timestamps: true
 });

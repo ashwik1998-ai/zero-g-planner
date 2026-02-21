@@ -1,3 +1,5 @@
+import { useTaskStore } from '../store/useTaskStore';
+
 export class SoundService {
     private static audioContext: AudioContext;
     public static isMuted: boolean = false;
@@ -56,6 +58,28 @@ export class SoundService {
 
     static playLaunch() {
         if (this.isMuted) return;
+
+        // Try to play themed audio first for mission completion
+        const { soundTheme } = useTaskStore.getState();
+        if (soundTheme && soundTheme !== 'default') {
+            const audio = new Audio(`/sounds/${soundTheme}.mp3`);
+
+            // Adjust volume down slightly to be less abrasive
+            audio.volume = 0.5;
+
+            audio.play().catch(e => {
+                console.warn(`Failed to play ${soundTheme} theme audio:`, e);
+                // Fallback to default synthesizer below
+                this.playLaunchFallback();
+            });
+            return;
+        }
+
+        // Default or Fallback: synthesized sound
+        this.playLaunchFallback();
+    }
+
+    private static playLaunchFallback() {
         const ctx = this.getContext();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();

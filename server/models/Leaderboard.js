@@ -9,6 +9,7 @@ const LeaderboardSchema = new mongoose.Schema({
     streak: { type: Number, default: 0 },
     achievements: { type: [String], default: [] },
     lastCompletedDate: { type: String, default: null }, // ISO date string
+    soundTheme: { type: String, default: 'default' },
     lastSync: { type: Date, default: Date.now },
 }, {
     timestamps: true
