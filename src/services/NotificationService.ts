@@ -31,10 +31,13 @@ export class NotificationService {
     }
 
     static async requestPermission(): Promise<boolean> {
+        if (!ONESIGNAL_APP_ID) {
+            alert("⚠️ Subscription Failed: VITE_ONESIGNAL_APP_ID is missing from the Vercel Build. Please redeploy.");
+            return false;
+        }
+
         if (window.OneSignal && window.OneSignal.Notifications) {
             try {
-                // We directly request native permission because Chrome requires 
-                // this to stay synchronous with the user's click event.
                 await window.OneSignal.Notifications.requestPermission();
                 const permission = window.OneSignal.Notifications.permission;
                 return permission === true || permission === 'granted';
@@ -44,9 +47,15 @@ export class NotificationService {
             }
         }
 
-        // Fallback for slow loads
+        // Fallback for slow loads with a strict 4-second timeout to prevent infinite UI hanging
         return new Promise((resolve) => {
+            const timeoutId = setTimeout(() => {
+                alert("⚠️ Subscription Failed: OneSignal SDK timed out. Please ensure your Vercel URL is explicitly added to your OneSignal Dashboard Web Config Settings.");
+                resolve(false);
+            }, 4000);
+
             window.OneSignalDeferred.push(async function (OneSignal: any) {
+                clearTimeout(timeoutId);
                 try {
                     await OneSignal.Notifications.requestPermission();
                     const permission = OneSignal.Notifications ? OneSignal.Notifications.permission : false;
